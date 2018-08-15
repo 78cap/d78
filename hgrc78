@@ -1,0 +1,2 @@
+[extensions]
+flow=~/work/d78/hgext/hg_flow.py

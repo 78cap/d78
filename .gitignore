@@ -1,0 +1,4 @@
+*.pyc
+*.pyo
+hgext/tests/*.err
+hgext/tests/.testtimes

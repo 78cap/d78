@@ -1,0 +1,10 @@
+#!/bin/bash
+case _$1 in
+_update)
+git -C $(dirname $(dirname $0)) pull
+;;
+*)
+echo "Usage: `basename $0` update"
+[ ! -z $1 ] && exit 1
+;;
+esac
