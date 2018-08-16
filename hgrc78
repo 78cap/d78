@@ -1,2 +1,10 @@
 [extensions]
-flow=~/work/d78/hgext/hg_flow.py
+narrow =
+shelve =
+githelp =
+bookflow=~/work/d78/hgext/bookflow.py
+
+
+# needed by narrow
+[experimental]
+changegroup3=true

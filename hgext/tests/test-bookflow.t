@@ -1,10 +1,10 @@
 
 #
 # To run the test get the mercurial distro and run:
-# mercurial/tests/run-tests.py test-hg-flow.t
+# mercurial/tests/run-tests.py test-bookflow.t
 #
 initialize
-  $ alias hgg="hg --config extensions.flow=`dirname $TESTDIR`/hg_flow.py"
+  $ alias hgg="hg --config extensions.bookflow=`dirname $TESTDIR`/bookflow.py"
   $ make_changes() { d=`pwd`; [ ! -z $1 ] && cd $1; echo "test $(basename `pwd`)" >> test; hgg commit -Am"${2:-test}"; r=$?; cd $d; return $r; }
   $ assert_clean() { ls -1 $1 | grep -v "test$" | cat;}
   $ ls -1a
@@ -72,7 +72,7 @@ check protection of @ bookmark
    \* @                         2:* (glob)
      X                         1:* (glob)
 
-  $ hgg --config flow.protect= commit  -Am"Updated test"
+  $ hgg --config bookflow.protect= commit  -Am"Updated test"
 
   $ hgg bookmarks
    \* @                         3:* (glob)
