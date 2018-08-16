@@ -1,0 +1,96 @@
+#!/bin/bash
+if [ -z "`grep -i Ubuntu /etc/os-release`" ]; then
+    echo "This script is only supposed to run on Ubuntu"
+    exit 1
+fi
+
+if [ "$1" == "-u" ]; then
+    sudo dpkg --purge mercurial &&
+    sudo dpkg --purge mercurial-common &&
+    echo "Done."
+    exit
+fi
+
+if [ "$1" != "-c" ]; then
+if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
+    echo "Mercurial is already installed, to uninstall run $0 -u"
+    exit 1
+fi
+
+function install_python2() {
+    : "don't install by default"
+}
+
+UBUNTU_MAJOR=`grep "^VERSION_ID=" /etc/os-release | sed "s/.*=//" | tr -d \" | sed "s/\..*//"`
+if [ "$UBUNTU_MAJOR" -ge "18" ]; then
+    if [ ! -e /usr/bin/python ]; then
+        function install_python2() {
+            sudo apt install python-minimal
+        }
+    elif [ `/usr/bin/python -c "import sys; print(sys.version[0])"` != 2 ]; then
+        function install_python2() {
+            sudo apt install python-minimal
+        }
+    fi
+
+fi
+
+HGVERSION=4.6-1
+if [ $HGVERSION == 78 ]; then
+    HG_BASE_URL=http://sec-repo/repo78/deb
+    HG_COMMON_DEB=mercurial-common.deb
+    HG_DEB=mercurial.deb
+else
+    HG_BASE_URL=http://ftp.us.debian.org/debian/pool/main/m/mercurial
+    HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
+    HG_DEB=mercurial_${HGVERSION}_amd64.deb
+fi
+install_python2 &&
+wget $HG_BASE_URL/$HG_COMMON_DEB &&
+wget $HG_BASE_URL/$HG_DEB &&
+sudo dpkg -i $HG_COMMON_DEB &&
+sudo dpkg -i $HG_DEB &&
+rm $HG_DEB $HG_COMMON_DEB &&
+echo -e "
+========================================" && hg --version
+fi
+
+USER=`id -un`
+unset HG_NAME
+unset HG_EMAIL
+if [ -e  $HOME/.gitconfig ]; then
+    HG_NAME=`git config --get user.name`
+    HG_EMAIL=`git config --get user.email`
+fi
+if [ "${HG_NAME:-$USER}" == "$USER" ]; then
+    u_zmurtha="Zack Murtha"
+    u_fcorrao="Frank Corrao"
+    u_pkritikos="Peter Kritikos"
+    u_njaggi="Neeraj Jaggi"
+    u_asissier="Adrian Sisser"
+    u_scash="Stephen Cash"
+    u_ashi="Alex Shi"
+    u_dzhang="David Zhang"
+    u_ygan="Yu Gan"
+    u_drappaport="David Rappaport"
+    u_gvenkat="Girish Venkat"
+    u_aturcan="Sandu Turcan"
+    u_mmichaux="Michael Michaux"
+    u_sbalaji="Shreyas Balaji"
+    u_qliu="Qing Liu"
+    u_jzhou="Jimmy Zhou"
+    eval "HG_NAME=\$u_$USER"
+fi
+HGRC="""\
+[ui]
+username = ${HG_NAME:-$USER} <${HG_EMAIL:-$USER@seveneightcapital.com}>
+
+%include work/d78/hgrc78
+"""
+if [ ! -e $HOME/.hgrc ]; then
+    echo -e "$HGRC" > $HOME/.hgrc
+    echo "Created $HOME/.hgrc"
+else
+    echo -e "$HOME/.hgrc already exists, you'll need to run hg config --edit and add this:
+$HGRC"
+fi
