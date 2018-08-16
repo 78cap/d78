@@ -1,5 +1,5 @@
 #!/bin/bash
-BASE_DIR=$(dirname $(dirname $0))
+BASE_DIR=$(dirname $(dirname `readlink -f $0`))
 case _$1 in
 _hgrc)
    hgrc_content=
