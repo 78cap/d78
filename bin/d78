@@ -7,7 +7,7 @@ _hgrc)
       hgrc_content=`grep "^username" $HOME/.hgrc`
       [ ! -z "$hgrc_content" ] && hgrc_content="[ui]\n$hgrc_content"
    fi
-   hgrc_content="$hgrc_content\n\n%include ${BASE_DIR/$HOME\//}/hgrc78"
+   hgrc_content="$hgrc_content\n\n%include work/d78/hgrc78"
    echo "# This should be in ~/.hgrc"
    echo -e $hgrc_content
 ;;
