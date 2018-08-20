@@ -277,7 +277,7 @@ make sure that commits aren't possible if working directory is not pointing to a
   $ hgg id -i # we're still on the old commit
   36a6e592ec06
   $ hgg up X > /dev/null
-  $ hgg id -i # the plus means pending changes
+  $ hgg id -i # now we're on X
   f73a71c992b8
   $ hgg book | grep X
    \* X                         \d+:f73a71c992b8 (re)
