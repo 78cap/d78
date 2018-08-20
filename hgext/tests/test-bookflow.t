@@ -272,13 +272,13 @@ make sure that commits aren't possible if working directory is not pointing to a
   abort: Can't commit, working directory is not pointing to the active bookmark.
   Try: hg up X
   [255]
-  $ hgg up X -t :local > /dev/null
+  $ hgg up -C -r . > /dev/null # cleanup local changes
+  $ assert_clean
+  $ hgg id -i # we're still on the old commit
+  36a6e592ec06
+  $ hgg up X > /dev/null
   $ hgg id -i # the plus means pending changes
-  f73a71c992b8+
+  f73a71c992b8
   $ hgg book | grep X
    \* X                         \d+:f73a71c992b8 (re)
-  $ hgg up -C > /dev/null # forget the changes
-  $ hgg id -i
-  f73a71c992b8
-  $ assert_clean
 
