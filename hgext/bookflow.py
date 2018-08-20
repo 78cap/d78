@@ -100,8 +100,8 @@ def cmd_fsummary(ui, repo, **opts):
 def reposetup(ui, repo):
     extensions.wrapfunction(bookmarks, 'update', bookmarks_update)
     extensions.wrapfunction(bookmarks, 'addbookmarks', bookmarks_addbookmarks)
-
-    ui.setconfig('hooks', 'pretxncommit.' + MY_NAME, commit_hook, source=MY_NAME)
+    # commit hook conflicts with shelving
+    # ui.setconfig('hooks', 'pretxncommit.' + MY_NAME, commit_hook, source=MY_NAME)
 
 
 def uisetup(ui):

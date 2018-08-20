@@ -191,3 +191,28 @@ test hg pull when there is more than one descendant
   b74a4149df25 tip Z
   $ hgg bookmarks | grep \*  # no active bookmark
   [1]
+
+test shelving
+  $ cd ../a
+  $ echo anotherfile > anotherfile # this change should not conflict
+  $ hgg add anotherfile
+  $ hgg commit -m"Change in a"
+  $ cd ../b
+  $ hgg up Z | grep Z
+  (activating bookmark Z)
+  $ hgg book | grep \* # make sure active bookmark
+   \* Z                         10:* (glob)
+  $ echo "test b" >> test
+  $ hgg diff --stat
+   test |  1 +
+   1 files changed, 1 insertions(+), 0 deletions(-)
+  $ hgg --config extensions.shelve= shelve
+  shelved as Z
+  1 files updated, 0 files merged, 0 files removed, 0 files unresolved
+  $ hgg pull -u > /dev/null
+  $ hgg --trace --config extensions.shelve= unshelve
+  unshelving change 'Z'
+  rebasing shelved changes
+  $ hgg diff --stat
+   test |  1 +
+   1 files changed, 1 insertions(+), 0 deletions(-)
