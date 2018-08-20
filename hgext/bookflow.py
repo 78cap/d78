@@ -19,7 +19,8 @@ from mercurial import (
     error,
     registrar,
     commands,
-    extensions
+    extensions,
+    node
 )
 
 MY_NAME = __name__[len('hgext_'):] if __name__.startswith('hgext_') else __name__
@@ -36,10 +37,15 @@ command = registrar.command(cmdtable)
 
 def commit_hook(ui, repo, **kwargs):
     active = repo._bookmarks.active
-    if not active and ui.configbool(MY_NAME, 'require_bookmark', True):
+    if active:
+        if active in ui.configlist(MY_NAME, 'protect'):
+            raise error.Abort(_('Can\'t commit, bookmark {} is protected').format(active))
+        mark_id = repo._bookmarks[active]
+        cur_id = repo.lookup('.')
+        if cur_id != mark_id:
+            raise error.Abort(_('Can\'t commit, working directory is not pointing to the active bookmark.\nTry: hg up {}').format(active))
+    elif ui.configbool(MY_NAME, 'require_bookmark', True):
         raise error.Abort(_('Can\'t commit without an active bookmark'))
-    elif active in ui.configlist(MY_NAME, 'protect'):
-        raise error.Abort(_('Can\'t commit, bookmark {} is protected').format(active))
     return 0
 
 

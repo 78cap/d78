@@ -243,6 +243,42 @@ make the bookmark move by updating it on a, and then pulling with a local change
   warning: conflicts while merging test! (edit, then use 'hg resolve --mark')
   0 files updated, 0 files merged, 0 files removed, 1 files unresolved
   use 'hg resolve' to retry unresolved file merges
-  $ hg update -C
+  $ hg update -C > /dev/null
+  $ rm test.orig
 
+make sure that commits aren't possible if working directory is not pointing to active bookmark
+  $ assert_clean ../a
+  $ assert_clean ../b
+  $ hgg --cwd ../a id -i
+  36a6e592ec06
+  $ hgg --cwd ../a book | grep X
+   \* X                         \d+:36a6e592ec06 (re)
+  $ hgg --cwd ../b id -i
+  36a6e592ec06
+  $ hgg --cwd ../b book | grep X
+   \* X                         \d+:36a6e592ec06 (re)
+  $ make_changes ../a
+  $ hgg --cwd ../a book | grep X
+   \* X                         \d+:f73a71c992b8 (re)
+  $ cd ../b
+  $ hgg pull 2>&1 | grep updat
+  updating bookmark X
+  (run 'hg update' to get a working copy)
+  $ hgg id -i # we're still on the old commit
+  36a6e592ec06
+  $ hgg book | grep X # while the bookmark moved
+   \* X                         \d+:f73a71c992b8 (re)
+  $ make_changes
+  abort: Can't commit, working directory is not pointing to the active bookmark.
+  Try: hg up X
+  [255]
+  $ hgg up X -t :local > /dev/null
+  $ hgg id -i # the plus means pending changes
+  f73a71c992b8+
+  $ hgg book | grep X
+   \* X                         \d+:f73a71c992b8 (re)
+  $ hgg up -C > /dev/null # forget the changes
+  $ hgg id -i
+  f73a71c992b8
+  $ assert_clean
 
