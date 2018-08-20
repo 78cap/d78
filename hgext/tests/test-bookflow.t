@@ -1,7 +1,7 @@
 
 #
 # To run the test get the mercurial distro and run:
-# mercurial/tests/run-tests.py test-bookflow.t
+# <repo_path>/tests/run-tests.py test-bookflow.t
 #
 initialize
   $ alias hgg="hg --config extensions.bookflow=`dirname $TESTDIR`/bookflow.py"
@@ -119,6 +119,7 @@ make the bookmark move by updating it on a, and then pulling
    * X                         4:81af7977fdb9
 
 the bookmark should not move if it diverged from remote
+## assumes we're still on bookmark X
   $ assert_clean ../a
   $ assert_clean ../b
   $ make_changes ../a
@@ -192,6 +193,8 @@ test hg pull when there is more than one descendant
   $ hgg bookmarks | grep \*  # no active bookmark
   [1]
 
+
+
 test shelving
   $ cd ../a
   $ echo anotherfile > anotherfile # this change should not conflict
@@ -216,3 +219,30 @@ test shelving
   $ hgg diff --stat
    test |  1 +
    1 files changed, 1 insertions(+), 0 deletions(-)
+
+
+make the bookmark move by updating it on a, and then pulling with a local change
+# add a commit to a
+  $ cd ../a
+  $ hgg up -C X |fgrep  "activating bookmark X"
+  (activating bookmark X)
+# go back to b, and check out X
+  $ cd ../b
+  $ hgg up -C X |fgrep  "activating bookmark X"
+  (activating bookmark X)
+# update and push from a
+  $ make_changes ../a > /dev/null
+  $ echo "more" >> test
+  $ hgg pull -u 2>&1 | fgrep -v TESTTMP| fgrep -v "searching for changes" | fgrep -v adding
+  pulling from $TESTTMP/a
+  added 1 changesets with 0 changes to 0 files (+1 heads)
+  updating bookmark X
+  new changesets * (glob)
+  updating to active bookmark X
+  merging test
+  warning: conflicts while merging test! (edit, then use 'hg resolve --mark')
+  0 files updated, 0 files merged, 0 files removed, 1 files unresolved
+  use 'hg resolve' to retry unresolved file merges
+  $ hg update -C
+
+
