@@ -12,4 +12,5 @@ changegroup3=true
 [alias]
 fheads = heads --style=$HOME/work/d78/hgext/hgcli-heads.tpl
 fbookmarks = log --style=$HOME/work/d78/hgext/hgcli-heads.tpl -r "revset(named('bookmarks'))"
-flog = log --style=$HOME/work/d78/hgext/hgcli-log.tpl
+flog = log --style=$HOME/work/d78/hgext/hgcli-log.tpl -r 'reverse(:.)'
+fflog = log --style=$HOME/work/d78/hgext/hgcli-log.tpl
