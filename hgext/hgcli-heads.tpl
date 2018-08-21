@@ -1,4 +1,4 @@
-changeset = '\033[0;33m{node|short}\033[0m{if(activebookmark, " \033[0;92m[{activebookmark}]\033[0m" ,bookmarks)}{branches} {desc|firstline|strip} \033[1;30m({date|age} by {author|person})\033[0m{tags}\033[0m \033[0;33m({revset('{node}%.')|count}/{revset('.%{node}')|count})\033[0m\n'
+changeset = '\033[0;33m{node|short}\033[0m{if(activebookmark, " \033[0;92m[{activebookmark}]\033[0m" ,bookmarks)}{branches} {desc|firstline|strip} \033[1;30m({date|age} by {author|person})\033[0m{tags}\033[0m \033[0;33m({revset('.%{node}')|count}/{revset('{node}%.')|count})\033[0m\n'
 
 changeset_quiet = '\033[0;33m{node|short}\033[0m {desc|firstline|strip}\n'
 
