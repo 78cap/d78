@@ -19,8 +19,7 @@ from mercurial import (
     error,
     registrar,
     commands,
-    extensions,
-    node
+    extensions
 )
 
 MY_NAME = __name__[len('hgext_'):] if __name__.startswith('hgext_') else __name__
@@ -87,33 +86,6 @@ def commands_branch(orig, ui, repo, label=None, **opts):
     if label and not opts.get('clean') and not opts.get('rev'):
         raise error.Abort("Branching should be done using bookmarks:\nhg bookmark " + label)
     return orig(ui, repo, label, **opts)
-
-
-@command('^fsummary|fsum', [
-        #('u', 'update', False, 'get latest version of ' + MY_NAME),
-        # ('l', 'list', False, 'show the stack of changeset in the topic'),
-        # ('', 'age', False, 'show when you last touched the topics'),
-        # ('', 'current', None, 'display the current topic only'),
-    ], intents={registrar.INTENT_READONLY})
-def cmd_fsummary(ui, repo, **opts):
-    """show flow summary"""
-    rev_node_name = opts.get('rev') or '.'
-    rev_node = repo.lookup(rev_node_name)
-    marks = bookmarks.listbookmarks(repo)
-    active_mark = repo._bookmarks.active
-    if active_mark and rev_node_name == '.':
-        rev_node_name = active_mark
-    header_printed = False
-    for mark, node_hex in marks.items():
-        mark_node = repo.lookup(node_hex)
-        if mark != active_mark or mark_node != rev_node:
-            ancestor = repo.changelog.ancestor(mark_node, rev_node)
-            revs_in_rev = sum(1 for _ in repo.changelog.nodesbetween([ancestor], [rev_node])[0]) - 1
-            revs_in_mark = sum(1 for _ in repo.changelog.nodesbetween([ancestor], [mark_node])[0]) - 1
-            if not header_printed:
-                header_printed = True
-                ui.write("%s is behind/ahead of:\n" % rev_node_name)
-            ui.write(" %-40s %6d %-6d\n" % (mark, revs_in_mark, revs_in_rev))
 
 
 def reposetup(ui, repo):
