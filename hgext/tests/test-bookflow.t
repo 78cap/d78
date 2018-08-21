@@ -261,16 +261,18 @@ make sure that commits aren't possible if working directory is not pointing to a
   $ hgg --cwd ../a book | grep X
    \* X                         \d+:f73a71c992b8 (re)
   $ cd ../b
-  $ hgg pull 2>&1 | grep updat
+  $ hgg pull  2>&1 | grep -v add|grep -v pulling|grep -v searching|grep -v changeset
   updating bookmark X
   (run 'hg update' to get a working copy)
+  Working directory out of sync with active bookmark.
+  Run: hg up X
   $ hgg id -i # we're still on the old commit
   36a6e592ec06
   $ hgg book | grep X # while the bookmark moved
    \* X                         \d+:f73a71c992b8 (re)
   $ make_changes
-  abort: Can't commit, working directory is not pointing to the active bookmark.
-  Try: hg up X
+  abort: Can't commit, working directory out of sync with active bookmark.
+  Run: hg up X
   [255]
   $ hgg up -C -r . > /dev/null # cleanup local changes
   $ assert_clean

@@ -35,15 +35,14 @@ configitem(MY_NAME, 'enable_branches', False)
 cmdtable = {}
 command = registrar.command(cmdtable)
 
+
 def commit_hook(ui, repo, **kwargs):
     active = repo._bookmarks.active
     if active:
         if active in ui.configlist(MY_NAME, 'protect'):
             raise error.Abort(_('Can\'t commit, bookmark {} is protected').format(active))
-        mark_id = repo._bookmarks[active]
-        cur_id = repo.lookup('.')
-        if cur_id != mark_id:
-            raise error.Abort(_('Can\'t commit, working directory is not pointing to the active bookmark.\nTry: hg up {}').format(active))
+        if not cwd_at_bookmark(repo, active):
+            raise error.Abort(_('Can\'t commit, working directory out of sync with active bookmark.\nRun: hg up {}').format(active))
     elif ui.configbool(MY_NAME, 'require_bookmark', True):
         raise error.Abort(_('Can\'t commit without an active bookmark'))
     return 0
@@ -68,6 +67,20 @@ def bookmarks_addbookmarks(orig, repo, tr, names, rev=None, force=False, inactiv
 def commands_commit(orig, ui, repo, *args, **opts):
     commit_hook(ui, repo)
     return orig(ui, repo, *args, **opts)
+
+
+def commands_pull(orig, ui, repo, *args, **opts):
+    rc = orig(ui, repo, *args, **opts)
+    active = repo._bookmarks.active
+    if active and not cwd_at_bookmark(repo, active):
+        ui.warn("Working directory out of sync with active bookmark.\nRun: hg up {}\n".format(active))
+    return rc
+
+
+def cwd_at_bookmark(repo, mark):
+    mark_id = repo._bookmarks[mark]
+    cur_id = repo.lookup('.')
+    return cur_id == mark_id
 
 
 def commands_branch(orig, ui, repo, label=None, **opts):
@@ -112,5 +125,6 @@ def reposetup(ui, repo):
 
 def uisetup(ui):
     extensions.wrapcommand(commands.table, 'commit', commands_commit)
+    extensions.wrapcommand(commands.table, 'pull', commands_pull)
     if not ui.configbool(MY_NAME, 'enable_branches'):
         extensions.wrapcommand(commands.table, 'branch', commands_branch)
