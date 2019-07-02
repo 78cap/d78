@@ -35,13 +35,17 @@ if [ "$UBUNTU_MAJOR" -ge "18" ]; then
 
 fi
 
-HGVERSION=4.7.2-1
+HGVERSION=5.0.1
 if [ $HGVERSION == 78 ]; then
     HG_BASE_URL=http://sec-repo/repo78/deb
     HG_COMMON_DEB=mercurial-common.deb
     HG_DEB=mercurial.deb
 elif [ "$HGVERSION" == "4.7.2-1" ]; then
     HG_BASE_URL=http://sec-repo/repo78/deb
+    HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
+    HG_DEB=mercurial_${HGVERSION}_amd64.deb
+elif [ "$HGVERSION" == "5.0.1" ]; then
+    HG_BASE_URL=http://com-78-pypi.s3-website-us-east-1.amazonaws.com/docker_bin
     HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
     HG_DEB=mercurial_${HGVERSION}_amd64.deb
 else

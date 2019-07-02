@@ -2,7 +2,7 @@
 narrow =
 shelve =
 githelp =
-bookflow=~/work/d78/hgext/bookflow.py
+bookflow =
 
 
 # needed by narrow
