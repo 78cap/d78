@@ -25,10 +25,12 @@ oneline_with_offsets = '{ansi_node}{ansi_bookmarks}{ansi_tags}{ansi_branches} {a
 oneline_with_at_offs = '{ansi_node}{ansi_bookmarks}{ansi_tags}{ansi_branches} {ansi_desc} {ansi_at_offs}{ansi_reset}\n'
 
 [alias]
-fheads      = heads                         -Toneline_with_offsets
-fmheads     = heads                         -Toneline_with_at_offs
-fbookmarks  = log -r "named('bookmarks')"   -Toneline_with_offsets
-fmbookmarks = log -r "named('bookmarks')"   -Toneline_with_at_offs
-ftags       = log -r "named('tags')"        -Toneline_with_offsets
-fmtags      = log -r "named('tags')"        -Toneline_with_at_offs
-flog        = log                           -Toneline
+fheads      = heads                                 -Toneline_with_offsets
+fmheads     = heads                                 -Toneline_with_at_offs
+fbookmarks  = log -r "named('bookmarks')"           -Toneline_with_offsets
+fmbookmarks = log -r "named('bookmarks')"           -Toneline_with_at_offs
+ftags       = log -r "named('tags')"                -Toneline_with_offsets
+fmtags      = log -r "named('tags')"                -Toneline_with_at_offs
+flog        = log                                   -Toneline
+flog1       = log -r "reverse(only(p1(), p2()))"    -Toneline
+flog2       = log -r "reverse(only(p2(), p1()))"    -Toneline
