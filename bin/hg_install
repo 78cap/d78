@@ -22,43 +22,47 @@ function install_python2() {
 }
 
 UBUNTU_MAJOR=`grep "^VERSION_ID=" /etc/os-release | sed "s/.*=//" | tr -d \" | sed "s/\..*//"`
-if [ "$UBUNTU_MAJOR" -ge "18" ]; then
-    if [ ! -e /usr/bin/python ]; then
-        function install_python2() {
-            sudo apt install python-minimal
-        }
-    elif [ `/usr/bin/python -c "import sys; print(sys.version[0])"` != 2 ]; then
-        function install_python2() {
-            sudo apt install python-minimal
-        }
-    fi
-
-fi
-
-HGVERSION=5.0.2
-if [ $HGVERSION == 78 ]; then
-    HG_BASE_URL=http://sec-repo/repo78/deb
-    HG_COMMON_DEB=mercurial-common.deb
-    HG_DEB=mercurial.deb
-elif [ "$HGVERSION" == "4.7.2-1" ]; then
-    HG_BASE_URL=http://sec-repo/repo78/deb
-    HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-    HG_DEB=mercurial_${HGVERSION}_amd64.deb
-elif [ "$HGVERSION" == "5.0.2" ]; then
-    HG_BASE_URL=http://com-78-pypi.s3-website-us-east-1.amazonaws.com/docker_bin
-    HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-    HG_DEB=mercurial_${HGVERSION}_amd64.deb
+if [ "$UBUNTU_MAJOR" -ge "20" ]; then
+    sudo apt update && sudo apt install -y mercurial
 else
-    HG_BASE_URL=http://ftp.us.debian.org/debian/pool/main/m/mercurial
-    HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-    HG_DEB=mercurial_${HGVERSION}_amd64.deb
+  if [ "$UBUNTU_MAJOR" -ge "18" ]; then
+      if [ ! -e /usr/bin/python ]; then
+          function install_python2() {
+              sudo apt update && sudo apt install -y python-minimal
+          }
+      elif [ `/usr/bin/python -c "import sys; print(sys.version[0])"` != 2 ]; then
+          function install_python2() {
+              sudo apt update && sudo apt install -y python-minimal
+          }
+      fi
+  fi
+
+  HGVERSION=5.0.2
+  if [ $HGVERSION == 78 ]; then
+      HG_BASE_URL=http://sec-repo/repo78/deb
+      HG_COMMON_DEB=mercurial-common.deb
+      HG_DEB=mercurial.deb
+  elif [ "$HGVERSION" == "4.7.2-1" ]; then
+      HG_BASE_URL=http://sec-repo/repo78/deb
+      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
+      HG_DEB=mercurial_${HGVERSION}_amd64.deb
+  elif [ "$HGVERSION" == "5.0.2" ]; then
+      HG_BASE_URL=http://com-78-pypi.s3-website-us-east-1.amazonaws.com/docker_bin
+      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
+      HG_DEB=mercurial_${HGVERSION}_amd64.deb
+  else
+      HG_BASE_URL=http://ftp.us.debian.org/debian/pool/main/m/mercurial
+      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
+      HG_DEB=mercurial_${HGVERSION}_amd64.deb
+  fi
+  install_python2 &&
+  wget $HG_BASE_URL/$HG_COMMON_DEB &&
+  wget $HG_BASE_URL/$HG_DEB &&
+  sudo dpkg -i $HG_COMMON_DEB &&
+  sudo dpkg -i $HG_DEB &&
+  rm $HG_DEB $HG_COMMON_DEB
 fi
-install_python2 &&
-wget $HG_BASE_URL/$HG_COMMON_DEB &&
-wget $HG_BASE_URL/$HG_DEB &&
-sudo dpkg -i $HG_COMMON_DEB &&
-sudo dpkg -i $HG_DEB &&
-rm $HG_DEB $HG_COMMON_DEB &&
+[ $? == 0 ] &&
 echo -e "
 ========================================" && hg --version
 fi
