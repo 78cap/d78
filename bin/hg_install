@@ -11,9 +11,54 @@ if [ "$1" == "-u" ]; then
     exit
 fi
 
+function write_hgrc() {
+  USER=`id -un`
+  unset HG_NAME
+  unset HG_EMAIL
+  if [ -e  $HOME/.gitconfig ]; then
+      HG_NAME=`git config --get user.name`
+      HG_EMAIL=`git config --get user.email`
+  fi
+  if [ "${HG_NAME:-$USER}" == "$USER" ]; then
+      u_zmurtha="Zack Murtha"
+      u_fcorrao="Frank Corrao"
+      u_pkritikos="Peter Kritikos"
+      u_njaggi="Neeraj Jaggi"
+      u_asissier="Adrian Sisser"
+      u_scash="Stephen Cash"
+      u_ashi="Alex Shi"
+      u_dzhang="David Zhang"
+      u_ygan="Yu Gan"
+      u_drappaport="David Rappaport"
+      u_gvenkat="Girish Venkat"
+      u_aturcan="Sandu Turcan"
+      u_mmichaux="Michael Michaux"
+      u_sbalaji="Shreyas Balaji"
+      u_qliu="Qing Liu"
+      u_jzhou="Jimmy Zhou"
+      eval "HG_NAME=\$u_$USER"
+  fi
+HGRC="""\
+[ui]
+username = ${HG_NAME:-$USER} <${HG_EMAIL:-$USER@seveneightcapital.com}>
+
+%include work/d78/hgrc78
+"""
+if [ ! -e $HOME/.hgrc ]; then
+    echo -e "$HGRC" > $HOME/.hgrc
+    echo "Created $HOME/.hgrc"
+else
+    echo -e "$HOME/.hgrc already exists, you may need to run hg config --edit and add this:
+$HGRC"
+fi
+
+}
+
+
 if [ "$1" != "-c" ]; then
 if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
     echo "Mercurial is already installed, to uninstall run $0 -u"
+    write_hgrc
     exit 1
 fi
 
@@ -67,42 +112,4 @@ echo -e "
 ========================================" && hg --version
 fi
 
-USER=`id -un`
-unset HG_NAME
-unset HG_EMAIL
-if [ -e  $HOME/.gitconfig ]; then
-    HG_NAME=`git config --get user.name`
-    HG_EMAIL=`git config --get user.email`
-fi
-if [ "${HG_NAME:-$USER}" == "$USER" ]; then
-    u_zmurtha="Zack Murtha"
-    u_fcorrao="Frank Corrao"
-    u_pkritikos="Peter Kritikos"
-    u_njaggi="Neeraj Jaggi"
-    u_asissier="Adrian Sisser"
-    u_scash="Stephen Cash"
-    u_ashi="Alex Shi"
-    u_dzhang="David Zhang"
-    u_ygan="Yu Gan"
-    u_drappaport="David Rappaport"
-    u_gvenkat="Girish Venkat"
-    u_aturcan="Sandu Turcan"
-    u_mmichaux="Michael Michaux"
-    u_sbalaji="Shreyas Balaji"
-    u_qliu="Qing Liu"
-    u_jzhou="Jimmy Zhou"
-    eval "HG_NAME=\$u_$USER"
-fi
-HGRC="""\
-[ui]
-username = ${HG_NAME:-$USER} <${HG_EMAIL:-$USER@seveneightcapital.com}>
-
-%include work/d78/hgrc78
-"""
-if [ ! -e $HOME/.hgrc ]; then
-    echo -e "$HGRC" > $HOME/.hgrc
-    echo "Created $HOME/.hgrc"
-else
-    echo -e "$HOME/.hgrc already exists, you'll need to run hg config --edit and add this:
-$HGRC"
-fi
+write_hgrc
