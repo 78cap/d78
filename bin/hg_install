@@ -57,6 +57,11 @@ fi
 
 if [ "$1" != "-c" ]; then
 if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
+    major_v=`hg version -T "{word(0,ver,'.')}"`
+    if [ "$major_v" -lt "5" ]; then
+      echo -e "Mercurial version 5.x is required, but `hg version -T '{ver}'` found.\nRun $0 -u to uninstall"
+      exit 1
+    fi
     echo "Mercurial is already installed, to uninstall run $0 -u"
     write_hgrc
     exit 1
