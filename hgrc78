@@ -3,7 +3,7 @@ narrow =
 shelve =
 githelp =
 bookflow =
-
+taghistory = ~/work/d78/hgext/taghistory.py
 
 # needed by narrow
 [experimental]
