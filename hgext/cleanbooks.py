@@ -1,5 +1,4 @@
-"""
-Provides utilities for bookmarks cleanup.
+"""provides utilities for bookmarks cleanup
 """
 from mercurial.i18n import _
 from mercurial import (

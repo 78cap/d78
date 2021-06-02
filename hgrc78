@@ -5,6 +5,7 @@ githelp =
 bookflow =
 taghistory = ~/work/d78/hgext/taghistory.py
 cleanbooks = ~/work/d78/hgext/cleanbooks.py
+stfilter = ~/work/d78/hgext/stfilter.py
 
 # needed by narrow
 [experimental]
