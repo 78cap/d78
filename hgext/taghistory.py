@@ -63,7 +63,7 @@ def cmd_taghistory(ui, repo, name, **opts):
 
     Gets the list of commits that were ever tagged as <name>
     """
-    if not opts.get(b'template'):
+    if not (opts.get(b'template') or opts.get('template')):
         tpl = ui.config(b'templates', b'oneline')
         if tpl:
             opts[b'template'] = tpl[1:-1].strip().replace(b'{ansi_node}', b'\033[0;33m{ver78}')

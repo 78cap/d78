@@ -12,13 +12,22 @@ init
 rmerge
   $ init_repo
   $ hg book a
+  bookmark a will be merged to @ when work is finished.
+  run hg rmerge periodically to get the latest from there.
   $ echo AAA >> a.txt; hg commit -Am'a_1'
+  bookmark a is now 0 revisions behind, and 1 ahead of @
   $ hg co @
   1 files updated, 0 files merged, 0 files removed, 0 files unresolved
   (activating bookmark @)
   $ hg book b
+  bookmark b will be merged to @ when work is finished.
+  run hg rmerge periodically to get the latest from there.
   $ echo BBB >> b.txt; hg commit -Am'b_1'
   created new head
+  bookmark b is now 0 revisions behind, and 1 ahead of @
+  $ hg merge a
+  abort: Merging b and a is discouraged, add --anyrev if you really have to
+  [255]
   $ hg rmerge a
   2 files updated, 0 files merged, 0 files removed, 0 files unresolved
   (activating bookmark a)
@@ -49,7 +58,10 @@ rmerge-during-merge
 rmerge-noop
   $ init_repo
   $ hg book a
+  bookmark a will be merged to @ when work is finished.
+  run hg rmerge periodically to get the latest from there.
   $ echo AAA >> a.txt; hg commit -Am'a_1'
+  bookmark a is now 0 revisions behind, and 1 ahead of @
   $ hg rmerge @
   no new changes in @
 
@@ -57,6 +69,7 @@ rmerge-ff
   $ init_repo
   $ hg book a --rev .
   $ echo AAA >> a.txt; hg commit -Am'_1'
+  bookmark @ is now 0 revisions behind, and 0 ahead of @
   $ hg co a
   1 files updated, 0 files merged, 0 files removed, 0 files unresolved
   (activating bookmark a)

@@ -11,6 +11,10 @@ stfilter = ~/work/d78/hgext/stfilter.py
 [experimental]
 changegroup3=true
 
+# uncomment this to enable random merges
+# [merge]
+# anyrev = True
+
 [templatealias]
 ansi_reset     = '\033[0m'
 ansi_node      = '\033[0;33m{node|short}'
@@ -18,21 +22,16 @@ ansi_bookmarks = '{if(bookmarks,sub("(\s|\[)({activebookmark})(\s|\])","\\1\033[
 ansi_tags      = '{if(tags," \033[0;34m[{tags}]")}'
 ansi_branches  = '{if(branches," \033[0;35m{branches}")}'
 ansi_desc      = '\033[0m{desc|firstline|strip} \033[1;30m({date|age} by {author|person})'
-ansi_offsets   = '\033[0;33m({revset(".%{node}")|count}:{revset("{node}%.")|count})'
-ansi_at_offs   = '\033[0;33m({revset("@%{node}")|count}:{revset("{node}%@")|count})'
+ansi_offsets   = '\033[0;33m({revs_behind}:{revs_ahead})'
 
 [templates]
 oneline              = '{ansi_node}{ansi_bookmarks}{ansi_tags}{ansi_branches} {ansi_desc}{ansi_reset}\n'
 oneline_with_offsets = '{ansi_node}{ansi_bookmarks}{ansi_tags}{ansi_branches} {ansi_desc} {ansi_offsets}{ansi_reset}\n'
-oneline_with_at_offs = '{ansi_node}{ansi_bookmarks}{ansi_tags}{ansi_branches} {ansi_desc} {ansi_at_offs}{ansi_reset}\n'
 
 [alias]
 fheads      = heads                                 -Toneline_with_offsets
-fmheads     = heads                                 -Toneline_with_at_offs
 fbookmarks  = log -r "named('bookmarks')"           -Toneline_with_offsets
-fmbookmarks = log -r "named('bookmarks')"           -Toneline_with_at_offs
 ftags       = log -r "named('tags')"                -Toneline_with_offsets
-fmtags      = log -r "named('tags')"                -Toneline_with_at_offs
 flog        = log                                   -Toneline
 flog1       = log -r "reverse(only(p1(), p2()))"    -Toneline
 flog2       = log -r "reverse(only(p2(), p1()))"    -Toneline
