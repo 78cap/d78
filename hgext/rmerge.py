@@ -50,8 +50,10 @@ if NAME is not given, use parent bookmark.
     if not bm:
         raise error.Abort(_(b'A bookmark needs to be active'))
 
+    ask_first = False
     if not node:
         node = _parent_bookmark_existing(repo, bm, fail=True)
+        ask_first = ui.interactive()
 
     if o_abort:
         if not ctx.p2():
@@ -88,19 +90,21 @@ if NAME is not given, use parent bookmark.
         return
 
     done = False
-    try:
-        c.update(ui, repo, node)
-        c.merge(ui, repo, ctx_hex, tool=(o_tool or b':fail'))
-        c.bookmark(ui, repo, bm, force=True)
-        b.activate(repo, bm)
-        done = True
-    finally:
-        if not done:
-            #c.bookmark(ui, repo, bm, rev=ctx_hex, force=True)
-            c.update(ui, repo, node=ctx_hex)
-        c_ctx = scmutil.revsingle(repo, bm)
-        if c_ctx != c_ctx.p1():
-            ui.status(_(b'bookmark %s moved from %s\n' % (bm, ctx_hex)))
+    r = ui.prompt(_(b'Merge %s into %s? (y/n): ') % (node, bm), default=b'n') if ask_first else b'y'
+    if r == b'y':
+        try:
+            c.update(ui, repo, node)
+            c.merge(ui, repo, ctx_hex, tool=(o_tool or b':fail'))
+            c.bookmark(ui, repo, bm, force=True)
+            b.activate(repo, bm)
+            done = True
+        finally:
+            if not done:
+                #c.bookmark(ui, repo, bm, rev=ctx_hex, force=True)
+                c.update(ui, repo, node=ctx_hex)
+            c_ctx = scmutil.revsingle(repo, bm)
+            if c_ctx != c_ctx.p1():
+                ui.status(_(b'bookmark %s moved from %s\n' % (bm, ctx_hex)))
 
 
 def _parent_bookmark(bm):
