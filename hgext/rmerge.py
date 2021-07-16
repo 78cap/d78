@@ -95,7 +95,7 @@ if NAME is not given, use parent bookmark.
         try:
             c.update(ui, repo, node)
             c.merge(ui, repo, ctx_hex, tool=(o_tool or b':fail'))
-            c.bookmark(ui, repo, bm, force=True)
+            c.bookmark(ui, repo, bm, force=True, rev=b'.')
             b.activate(repo, bm)
             done = True
         finally:
