@@ -132,7 +132,10 @@ def cmd_merge(orig, ui, repo, node=None, **opts):
         if activebookmark:
             if not node:
                 node = opts.get(b'rev') or opts.get('rev')
-            if node and _parent_bookmark_existing(repo, activebookmark) != node and _parent_bookmark_existing(repo, node) != activebookmark:
+            if node and _parent_bookmark_existing(repo, activebookmark) != node \
+                    and _parent_bookmark_existing(repo, node) != activebookmark \
+                    and node + b'@default' != activebookmark \
+                    and node != activebookmark + b'@default':
                 raise error.Abort(_(b'Merging %s and %s is discouraged, add --%s if you really have to') % (activebookmark, node, OPT_ANYREV))
     r = orig(ui, repo, node, **opts)
     return r
