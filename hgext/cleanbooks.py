@@ -46,17 +46,20 @@ def cmd_cleanbookmarks(ui, repo, source=b"default", **opts):
 
     By default exclude drafts and commits authored by current user"""
     remotemarks = get_remote_names(ui, source)
-    r = bookmarks.comparebookmarks(repo, remotemarks, repo._bookmarks)
+    n_bookmarks, divergent = _normalize_bookmarks(repo, source)
+    r = bookmarks.comparebookmarks(repo, remotemarks, n_bookmarks)
     addsrc, adddst, advsrc, advdst, diverge, differ, invalid, same = r
     cur_user = stringutil.shortuser(ui.username())
     result = dict()
     include_all = opts.get(b'all')
     for bname, rhash, lhash in adddst:
-        if include_all:
+        if bname in divergent:
+            bname_l, h_s = divergent[bname]
+            if h_s and (include_all or not _is_unpushed(repo, h_s, cur_user)):
+                result[bname] = binascii.hexlify(h_s)
+            bname = bname_l
+        if include_all or not _is_unpushed(repo, lhash, cur_user):
             result[bname] = binascii.hexlify(lhash)
-        else:
-            if not _is_unpushed(repo, cur_user, lhash):
-                result[bname] = binascii.hexlify(lhash)
 
     if result:
         _print_bookmarks(ui, repo, result, opts)
@@ -90,7 +93,15 @@ def cmd_diffbookmarks(ui, repo, source=b"default", **opts):
 
     By default exclude drafts and commits authored by current user"""
     remotemarks = get_remote_names(ui, source)
-    r = bookmarks.comparebookmarks(repo, remotemarks, repo._bookmarks)
+    n_bookmarks, divergent = _normalize_bookmarks(repo, source)
+    r = bookmarks.comparebookmarks(repo, remotemarks, n_bookmarks)
+    for rlist in r:
+        for i in range(len(rlist)):
+            name, rhash, lhash = rlist[i]
+            d = divergent.get(name)
+            if d:
+                bname_l, h_s = d
+                rlist[i] = (bname_l, rhash, lhash)
     addsrc, adddst, advsrc, advdst, diverge, differ, invalid, same = r
     cur_user = stringutil.shortuser(ui.username())
     empty_hash = b'0'*40
@@ -99,7 +110,7 @@ def cmd_diffbookmarks(ui, repo, source=b"default", **opts):
             lhash = binascii.hexlify(lhash)
         return (lhash or empty_hash) + b'   ' + (rhash or empty_hash)
 
-    adddst_u = {name: fmt_hashes(lhash, rhash) for name, rhash, lhash in adddst if _is_unpushed(repo, cur_user, lhash)}
+    adddst_u = {name: fmt_hashes(lhash, rhash) for name, rhash, lhash in adddst if _is_unpushed(repo, lhash, cur_user)}
     adddst_r = {name: fmt_hashes(lhash, rhash) for name, rhash, lhash in adddst if name not in adddst_u}
     results = [
         ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in addsrc}, 'A'),
@@ -116,8 +127,10 @@ def cmd_diffbookmarks(ui, repo, source=b"default", **opts):
     for bmarks, state in results:
         _print_bookmarks(ui, repo, bmarks, opts, prefix=state, pad_length=pad_length)
 
-def _is_unpushed(repo, cur_user, lhash):
+def _is_unpushed(repo, lhash, cur_user=None):
     ctx = repo[lhash]
+    if not cur_user:
+        return ctx.phase() > phases.public
     c_user = stringutil.shortuser(ctx.user())
     return c_user == cur_user or ctx.phase() > phases.public
 
@@ -144,3 +157,19 @@ def _print_bookmarks(ui, repo, bmarks, opts, prefix='', print_bookmarks_msg=Fals
             )
             fm.data(active=False)
             fm.plain(b'\n')
+
+def _normalize_bookmarks(repo, source):
+    """removes @default suffixes from bookmarks, returns new dict, and another dict shortname: long_name, long_hash, short_hash, is_unpushed"""
+    suffix = b'@' + source
+    bookmarks = repo._bookmarks
+    n_bookmarks = dict()
+    divergent = dict()
+    for bm, h in bookmarks.items():
+        n_bookmarks[bm] = h
+    for bm, h in bookmarks.items():
+        if bm.endswith(suffix):
+            bm_shortname = bm[0:-len(suffix)]
+            n_bookmarks[bm_shortname] = h
+            del n_bookmarks[bm]
+            divergent[bm_shortname] = (bm, bookmarks.get(bm_shortname))
+    return n_bookmarks, divergent
