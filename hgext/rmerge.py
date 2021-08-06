@@ -121,6 +121,8 @@ def cmd_commit(orig, ui, repo, *pats, **opts):
             r_behind = _revset_only(repo, parent_bookmark, activebookmark)
             r_ahead = _revset_only(repo, activebookmark, parent_bookmark)
             ui.status(_(b'bookmark %s is now %d revisions behind, and %d ahead of %s\n') % (activebookmark, len(r_behind), len(r_ahead), parent_bookmark))
+        if activebookmark + b'@default' in repo._bookmarks:
+            ui.warn(_(b'bookmark %s diverged from server, you need to merge it with %s@default\n') % (activebookmark, activebookmark))
     return r
 
 def cmd_merge(orig, ui, repo, node=None, **opts):
