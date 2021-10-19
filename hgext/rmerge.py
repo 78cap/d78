@@ -104,7 +104,9 @@ if NAME is not given, use parent bookmark.
                 c.update(ui, repo, node=ctx_hex)
             c_ctx = scmutil.revsingle(repo, bm)
             if c_ctx != c_ctx.p1():
-                ui.status(_(b'bookmark %s moved from %s\n' % (bm, ctx_hex)))
+                ui.status(_(b'bookmark %s moved from %s\n') % (bm, ctx_hex))
+            if done:
+                ui.status(_(b"(note that yours/theirs and local/server is reversed during merge conflict resolution, yours=%s, theirs=%s)\n") % (node, bm))
 
 
 def _parent_bookmark(bm):

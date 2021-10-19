@@ -34,6 +34,7 @@ rmerge
   1 files updated, 0 files merged, 0 files removed, 0 files unresolved
   (branch merge, don't forget to commit)
   bookmark b moved from * (glob)
+  (note that yours/theirs and local/server is reversed during merge conflict resolution, yours=a, theirs=b)
   $ hg status
   M b.txt
 
