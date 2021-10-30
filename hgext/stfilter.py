@@ -46,7 +46,7 @@ def commands_status(orig, ui, repo, *pats, **opts):
     # - effective flag is off
     # - or paths are specified
     # - or base/target rev are not specified
-    effective = opts.get('effective')
+    effective = opts.get(r'effective')
     revs = opts.get(b'rev') or opts.get('rev')
     if not effective or (pats and pats[0] != b'.') or not revs:
         if effective:

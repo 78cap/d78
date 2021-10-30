@@ -71,7 +71,7 @@ if NAME is not given, use parent bookmark.
         if not (opts.get(b'template') or opts.get('template')):
             tpl = ui.config(b'templates', b'oneline')
             if tpl:
-                opts[b'template'] = b'oneline'
+                opts[r'template'] = b'oneline'
         if o_behind and c_behind:
             c.log(ui, repo, rev=c_behind, **opts)
         if o_ahead and c_ahead:

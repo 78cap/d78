@@ -17,7 +17,7 @@ except ImportError: # hg <= 4.5
     from mercurial.util import datestr
 import binascii
 
-MY_NAME = 'taghistory'
+MY_NAME = b'taghistory'
 symbols = revsetlang.symbols
 cmdtable = {}
 command = registrar.command(cmdtable)
@@ -46,7 +46,7 @@ def get_tag_history(ui, repo, name):
 def kwver78(context, mapping):
     """String. The changeset as a version string."""
     ctx = context.resource(mapping, b'ctx')
-    date_s = datestr(ctx.date(), '%y.%-m.%-d.%-H%M')
+    date_s = datestr(ctx.date(), b'%y.%-m.%-d.%-H%M')
     while b'.0' in date_s:
         date_s = date_s.replace(b'.0', b'.')
     if date_s.endswith(b'.'):
@@ -68,7 +68,7 @@ def cmd_taghistory(ui, repo, name, **opts):
     if not (opts.get(b'template') or opts.get('template')):
         tpl = ui.config(b'templates', b'oneline')
         if tpl:
-            opts[b'template'] = tpl[1:-1].strip().replace(b'{ansi_node}', b'\033[0;33m{ver78}')
+            opts[r'template'] = tpl[1:-1].strip().replace(b'{ansi_node}', b'\033[0;33m{ver78}')
     commands.log(ui, repo, rev=get_tag_history(ui, repo, name), **opts)
 
 @command(b'pushtag', cmdutil.remoteopts + cmdutil.dryrunopts,

@@ -51,7 +51,7 @@ def cmd_cleanbookmarks(ui, repo, source=b"default", **opts):
     addsrc, adddst, advsrc, advdst, diverge, differ, invalid, same = r
     cur_user = stringutil.shortuser(ui.username())
     result = dict()
-    include_all = opts.get(b'all')
+    include_all = opts.get(r'all')
     for bname, rhash, lhash in adddst:
         if bname in divergent:
             bname_l, h_s = divergent[bname]
@@ -63,7 +63,7 @@ def cmd_cleanbookmarks(ui, repo, source=b"default", **opts):
 
     if result:
         _print_bookmarks(ui, repo, result, opts)
-        if not opts.get(b'dry_run'):
+        if not opts.get(r'dry_run'):
             r = ui.prompt(_(b'delete? (y/n): '), default=b'n') if ui.interactive() else b'y'
             if r in b'yY':
                 with repo.wlock(), repo.lock(), repo.transaction(b'bookmark') as tr:
@@ -113,13 +113,13 @@ def cmd_diffbookmarks(ui, repo, source=b"default", **opts):
     adddst_u = {name: fmt_hashes(lhash, rhash) for name, rhash, lhash in adddst if _is_unpushed(repo, lhash, cur_user)}
     adddst_r = {name: fmt_hashes(lhash, rhash) for name, rhash, lhash in adddst if name not in adddst_u}
     results = [
-        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in addsrc}, 'A'),
-        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in differ}, 'M'),
-        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in advsrc}, 'M'),
-        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in advdst}, 'M'),
-        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in diverge if binascii.hexlify(lhash) != rhash}, 'C'),
-        (adddst_r, 'R'),
-        (adddst_u, '?'),
+        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in addsrc}, b'A'),
+        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in differ}, b'M'),
+        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in advsrc}, b'M'),
+        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in advdst}, b'M'),
+        ({name: fmt_hashes(lhash, rhash) for name, rhash, lhash in diverge if binascii.hexlify(lhash) != rhash}, b'C'),
+        (adddst_r, b'R'),
+        (adddst_u, b'?'),
     ]
     pad_length = 0
     for bmarks, state in results:
@@ -134,7 +134,7 @@ def _is_unpushed(repo, lhash, cur_user=None):
     c_user = stringutil.shortuser(ctx.user())
     return c_user == cur_user or ctx.phase() > phases.public
 
-def _print_bookmarks(ui, repo, bmarks, opts, prefix='', print_bookmarks_msg=False, pad_length=0):
+def _print_bookmarks(ui, repo, bmarks, opts, prefix=b'', print_bookmarks_msg=False, pad_length=0):
     pad_length = pad_length or (max(len(name) for name in bmarks.keys()) if bmarks else 25)
     with ui.formatter(b'bookmarks', opts) as fm:
         if len(bmarks) == 0 and fm.isplain() and print_bookmarks_msg:
