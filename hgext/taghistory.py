@@ -7,7 +7,9 @@ from mercurial import (
     commands,
     revsetlang,
     tags,
-    cmdutil
+    cmdutil,
+    hg,
+    scmutil
 )
 try:
     from mercurial.utils.dateutil import datestr
@@ -68,6 +70,36 @@ def cmd_taghistory(ui, repo, name, **opts):
         if tpl:
             opts[b'template'] = tpl[1:-1].strip().replace(b'{ansi_node}', b'\033[0;33m{ver78}')
     commands.log(ui, repo, rev=get_tag_history(ui, repo, name), **opts)
+
+@command(b'pushtag', cmdutil.remoteopts + cmdutil.dryrunopts,
+        _(b'NAME'),
+         helpcategory=command.CATEGORY_MISC,
+         )
+def cmd_pushtag(ui, repo, name, dest=b"default", **opts):
+    """push tag to remote repository"""
+    c_ctx = scmutil.revsingle(repo, name)
+    remotepath = ui.expandpath(dest)
+    remoterepo = hg._peerlookup(remotepath).instance(ui, remotepath, create=False)
+    with remoterepo.commandexecutor() as e:
+        rnames = e.callcommand(
+            b'listkeys',
+            {
+                b'namespace': b'tags',
+            },
+        ).result()
+        if opts.get(b'dry_run') or opts.get('dry_run'):
+            ui.status(_(b''))
+        else:
+            result = e.callcommand(
+                b'pushkey',
+                {
+                    b'namespace': b'tags',
+                    b'key': name,
+                    b'old': rnames.get(name),
+                    b'new': c_ctx.hex(),
+                },
+            ).result()
+
 
 
 @predicate(b'taghistory(name)', safe=True)

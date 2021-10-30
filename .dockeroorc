@@ -1,0 +1,6 @@
+if [ -e $D78_HOME/bin/.hgpkg ] && [ -e $D78_HOME/bin/hg ]; then
+  vol_suffix=
+  [ $DOCKER_HOST_OS == Darwin ] && vol_suffix=,delegated
+  add_vol "$D78_HOME/bin/hg:/usr/bin/hg:ro$vol_suffix"
+  add_vol "$D78_HOME/bin/.hgpkg:/usr/bin/.hgpkg:ro$vol_suffix"
+fi

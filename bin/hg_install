@@ -54,67 +54,35 @@ fi
 
 }
 
-
 if [ "$1" != "-c" ]; then
-if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
+  BASE_DIR=$(dirname $(dirname `readlink -f $0`))
+  INSTALLED=
+  if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
     major_v=`hg version -T "{word(0,ver,'.')}"`
-    if [ "$major_v" -lt "5" ]; then
-      echo -e "Mercurial version 5.x is required, but `hg version -T '{ver}'` found.\nRun $0 -u to uninstall"
+    echo "Mercurial $major_v is installed via apt, to uninstall run $0 -u, to override prepend $BASE_DIR/bin to your PATH"
+    exit 1
+  fi
+  current_hg=`which hg 2> /dev/null`
+  if [ ! -z "$current_hg" ]; then
+    real_hg=`readlink -f $current_hg`
+    if [ "$real_hg" == "$BASE_DIR/bin/hg" ]; then
+      echo "Mercurial already installed"
+      INSTALLED=1
+    else
+      echo "Mercurial executable found in $current_hg, needs to be removed first. Try sudo rm $current_hg or prepend $BASE_DIR/bin to your PATH"
       exit 1
     fi
-    echo "Mercurial is already installed, to uninstall run $0 -u"
-    write_hgrc
-    exit 1
-fi
-
-function install_python2() {
-    : "don't install by default"
-}
-
-UBUNTU_MAJOR=`grep "^VERSION_ID=" /etc/os-release | sed "s/.*=//" | tr -d \" | sed "s/\..*//"`
-if [ "$UBUNTU_MAJOR" -ge "20" ]; then
-    sudo apt update && sudo apt install -y mercurial
-else
-  if [ "$UBUNTU_MAJOR" -ge "18" ]; then
-      if [ ! -e /usr/bin/python ]; then
-          function install_python2() {
-              sudo apt update && sudo apt install -y python-minimal
-          }
-      elif [ `/usr/bin/python -c "import sys; print(sys.version[0])"` != 2 ]; then
-          function install_python2() {
-              sudo apt update && sudo apt install -y python-minimal
-          }
-      fi
   fi
-
-  HGVERSION=5.0.2
-  if [ $HGVERSION == 78 ]; then
-      HG_BASE_URL=http://sec-repo/repo78/deb
-      HG_COMMON_DEB=mercurial-common.deb
-      HG_DEB=mercurial.deb
-  elif [ "$HGVERSION" == "4.7.2-1" ]; then
-      HG_BASE_URL=http://sec-repo/repo78/deb
-      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-      HG_DEB=mercurial_${HGVERSION}_amd64.deb
-  elif [ "$HGVERSION" == "5.0.2" ]; then
-      HG_BASE_URL=http://com-78-pypi.s3-website-us-east-1.amazonaws.com/docker_bin
-      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-      HG_DEB=mercurial_${HGVERSION}_amd64.deb
-  else
-      HG_BASE_URL=http://ftp.us.debian.org/debian/pool/main/m/mercurial
-      HG_COMMON_DEB=mercurial-common_${HGVERSION}_all.deb
-      HG_DEB=mercurial_${HGVERSION}_amd64.deb
+  if [ -z "$INSTALLED" ]; then
+    if [ ! -e $BASE_DIR/bin/.hgpkg ]; then
+      $BASE_DIR/bin/d78 update
+      [ $? != 0 ] && echo "d78 update failed" && exit 1
+    fi
+    echo "Creating symlink /usr/bin/hg -> $BASE_DIR/bin/hg"
+    sudo ln -s $BASE_DIR/bin/hg /usr/bin/hg
+    [ $? != 0 ] && echo "Installation failed" && exit 1
   fi
-  install_python2 &&
-  wget $HG_BASE_URL/$HG_COMMON_DEB &&
-  wget $HG_BASE_URL/$HG_DEB &&
-  sudo dpkg -i $HG_COMMON_DEB &&
-  sudo dpkg -i $HG_DEB &&
-  rm $HG_DEB $HG_COMMON_DEB
-fi
-[ $? == 0 ] &&
-echo -e "
-========================================" && hg --version
+  echo -e "========================================" && hg --version
 fi
 
 write_hgrc

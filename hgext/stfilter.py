@@ -50,7 +50,7 @@ def commands_status(orig, ui, repo, *pats, **opts):
     revs = opts.get(b'rev') or opts.get('rev')
     if not effective or (pats and pats[0] != b'.') or not revs:
         if effective:
-            ui.note(_(b'not using --effective rev=%s, paths=%s\n') % (revs, pats))
+            ui.note(_(b'not using --effective rev=%s, paths=%s\n') % (b','.join(revs), b','.join(pats)))
         return orig(ui, repo, *pats, **opts)
 
     orig_status = localrepo.localrepository.status
