@@ -12,8 +12,8 @@ rmerge = ~/work/d78/hgext/rmerge.py
 [experimental]
 changegroup3=true
 
-[ui]
-merge = internal:fail
+[merge-tools]
+vimdiff.disabled = yes
 
 # uncomment this to enable random merges
 # [merge]
