@@ -102,6 +102,9 @@ elif [ -z "$1" ]; then
     echo "This script is only supposed to run on Ubuntu and MacOS"
     exit 1
   fi
+else
+  echo "Unsupported command: $@"
+  exit 1
 fi
 
 
