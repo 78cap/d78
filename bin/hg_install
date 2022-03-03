@@ -1,15 +1,6 @@
 #!/bin/bash
-if [ -z "`grep -i Ubuntu /etc/os-release`" ]; then
-    echo "This script is only supposed to run on Ubuntu"
-    exit 1
-fi
 
-if [ "$1" == "-u" ]; then
-    sudo dpkg --purge mercurial &&
-    sudo dpkg --purge mercurial-common &&
-    echo "Done."
-    exit
-fi
+[ `uname` == Darwin ] && function readlink() { realpath $2; }
 
 function write_hgrc() {
   USER=`id -un`
@@ -54,7 +45,7 @@ fi
 
 }
 
-if [ "$1" != "-c" ]; then
+function install_ubuntu() {
   BASE_DIR=$(dirname $(dirname `readlink -f $0`))
   INSTALLED=
   if [ ! -z "`dpkg -l | grep ' mercurial '`" ]; then
@@ -83,6 +74,35 @@ if [ "$1" != "-c" ]; then
     [ $? != 0 ] && echo "Installation failed" && exit 1
   fi
   echo -e "========================================" && hg --version
+}
+
+if [ "$1" == "-u" ]; then
+   if [ `uname` == Linux ] && [ ! -z "`grep -i Ubuntu /etc/os-release`" ]; then
+    sudo dpkg --purge mercurial &&
+    sudo dpkg --purge mercurial-common &&
+    echo "Done."
+  else
+    echo "This command is only supposed to run on Ubuntu"
+    exit 1
+  fi
+elif [ "$1" == "-c" ]; then
+  write_hgrc
+elif [ -z "$1" ]; then
+  if [ `uname` == Darwin ]; then
+    which hg > /dev/null || echo "Please install mercurial from https://www.mercurial-scm.org/downloads"
+    write_hgrc
+  elif [ `uname` == Linux ]; then
+    if [ -z "`grep -i Ubuntu /etc/os-release`" ]; then
+        echo "This script is only supposed to run on Ubuntu"
+        exit 1
+    fi
+    install_ubuntu
+    write_hgrc
+  else
+    echo "This script is only supposed to run on Ubuntu and MacOS"
+    exit 1
+  fi
 fi
 
-write_hgrc
+
+

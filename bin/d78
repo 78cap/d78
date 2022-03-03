@@ -15,7 +15,7 @@ _hgrc)
 _update)
 git -C $BASE_DIR pull -q
 [ $? != 0 ] && echo "Update failed" && exit 1
-REQ_VERSION_OF_HG=5.9.3
+REQ_VERSION_OF_HG=6.1
 REQ_VERSION_OF_PYTHON=3.6.3
 PKG_DIR=$BASE_DIR/bin/.hgpkg
 ################################
