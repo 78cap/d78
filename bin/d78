@@ -1,7 +1,9 @@
 #!/bin/bash
 [ `uname` == Darwin ] && function readlink() { realpath $2; }
 BASE_DIR=$(dirname $(dirname `readlink -f $0`))
-case _$1 in
+cmd=$1
+shift
+case _$cmd in
 _hgrc)
    hgrc_content=
    if [ -e $HOME/.hgrc ]; then
@@ -11,6 +13,45 @@ _hgrc)
    hgrc_content="$hgrc_content\n\n%include work/d78/hgrc78"
    echo "# This should be in ~/.hgrc"
    echo -e $hgrc_content
+;;
+_newproject)
+[ -z "$1" ] && echo "Usage: $0 $cmd PROJECT_DIR" && exit 1
+pdir=${1:?not set}
+[ -e $pdir/build.gradle ] && echo "Project already exists in $pdir" && exit 1
+pname=`basename $pdir`
+
+if [ -e `dirname $pdir`/build-includes.gradle ]; then
+  msg_add="add '$pname': 'cap78_$pname' to `dirname $pdir`/build-includes.gradle"
+elif [ -e `dirname $pdir`/settings.gradle ]; then
+  msg_add="add '$pname' to `dirname $pdir`/settings.gradle"
+else
+  echo -e "Directory `dirname $pdir` doesn't have a settings.gradle or build-includes.gradle\nThere will be no way to add the project to the list"
+  exit 1
+fi
+
+mkdir -p $pdir/src/main/python/cap78/$pname
+[ ! -e $pdir/build.gradle ] && cat << EOF > $pdir/build.gradle
+plugins {
+    id 'com.seveneight.build.shared-tasks'
+}
+group = 'com.seveneight'
+
+cap78.pySetup {
+    //
+    // Versions are maintained in publics/default-versions.txt
+    // They can be overridden here
+    //
+    install_requires = [
+        cap78.project('publics'),
+        cap78.project('privates'),
+    ]
+}
+EOF
+[ ! -e $pdir/src/main/python/cap78/__init__.py ] && echo "__import__('pkg_resources').declare_namespace(__name__)" > $pdir/src/main/python/cap78/__init__.py
+[ ! -e $pdir/src/main/python/cap78/$pname/__init__.py ] && touch $pdir/src/main/python/cap78/$pname/__init__.py
+echo "Project cap78_$pname created in $pdir"
+echo "Run hg add $pdir"
+echo "And $msg_add"
 ;;
 _update)
 git -C $BASE_DIR pull -q
@@ -70,7 +111,7 @@ if [ -z "$PKG_UPDATED" ]; then
 fi
 ;;
 *)
-echo "Usage: `basename $0` update|hgrc"
-[ ! -z $1 ] && exit 1
+echo "Usage: `basename $0` update|hgrc|newproject"
+[ ! -z $cmd ] && exit 1
 ;;
 esac
