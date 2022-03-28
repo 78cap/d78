@@ -180,7 +180,7 @@ def _get_bookmark_from_ctx(context, mapping):
     repo = context.resource(mapping, b'repo')
     bookmarks = ctx.bookmarks()
     if not bookmarks:
-        return None
+        return repo, None, None
     bookmark = bookmarks[0]
     return repo, bookmark, _parent_bookmark_existing(repo, bookmark)
 
