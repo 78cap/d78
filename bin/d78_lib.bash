@@ -8,9 +8,9 @@ function run_distro_cmd() {
   if [ "$1" == "--update" ]; then
     shift
     [ -d $DISTRO_DIR ] && rm -r $DISTRO_DIR
-    [ $? != 0 ] && echo "Error occurred" && exit 1
+    [ -d $DISTRO_DIR ] && echo "Error occurred" && exit 1
     DISTRO_CMD=""
-    echo "Updating  $PROJECT_NAME distro in $DISTRO_DIR..."
+    echo "Updating $PROJECT_NAME distro in $DISTRO_DIR..."
     hg --cwd $SRC_DIR archive -r @ -t files $CLEAN_SRC_DIR -I settings.gradle -I gradle -I gradlew -I publics && \
     cd $CLEAN_SRC_DIR && \
     ./gradlew xargs-$PROJECT_NAME-distro --cmd "[distro_dir]/bin/post-install" && \
