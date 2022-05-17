@@ -1,5 +1,5 @@
 #!/bin/bash
 [ `uname` == Darwin ] && function readlink() { realpath $2; }
 . $(dirname $(readlink -f $0))/d78_lib.bash
-PROJECT_NAME=cap78_nucleus DISTRO_CMD=nucleus_client \
+PROJECT_NAME=cap78_nucleus DISTRO_CMD="r78 py -m cap78.nucleus.script.nuc" \
 run_distro_cmd "$@"
