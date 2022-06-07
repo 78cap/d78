@@ -24,7 +24,7 @@ if [ -e `dirname $pdir`/build-includes.gradle ]; then
   msg_add="add '$pname': 'cap78_$pname' to `dirname $pdir`/build-includes.gradle"
 elif [ -e `dirname $pdir`/settings.gradle ]; then
   msg_add="add '$pname' to `dirname $pdir`/settings.gradle"
-else
+elif [ "$(basename $(dirname $pdir))" != "apps" ]; then
   echo -e "Directory `dirname $pdir` doesn't have a settings.gradle or build-includes.gradle\nThere will be no way to add the project to the list"
   exit 1
 fi
@@ -52,6 +52,30 @@ EOF
 echo "Project cap78_$pname created in $pdir"
 echo "Run hg add $pdir"
 echo "And $msg_add"
+;;
+_install_devtools)
+  [ "`uname`" == "Darwin" ] && echo "Sorry, this is not supported under MacOS" && exit 1
+  if [ -d /host_opt ] && [ "`id -u`" == "0" ] && [ ! -z "$HOST_OPT_DIR" ]; then
+    PATH_TO_ADD=
+    for dir in /opt/*/*; do
+      p_name=$(basename $(dirname $dir))
+      p_version=$(basename $dir)
+      if [ "$p_name" == "java" -o "$p_name" == "python" ]; then
+        PATH_TO_ADD=$PATH_TO_ADD:$HOST_OPT_DIR/$p_name/$p_version/bin
+        [ -e "/host_opt/$p_name/$p_version" ] && echo "Installation $dir already exists"  && continue
+        echo "Copying $dir out of container into $HOST_OPT_DIR"
+        mkdir -p /host_opt/$p_name
+        cp -r $dir /host_opt/$p_name
+      else
+        echo "Skipping $dir"
+      fi
+    done
+    [ ! -z "$PATH_TO_ADD" ] && PATH_TO_ADD=${PATH_TO_ADD:1} && echo -e "Tools were installed under $HOST_OPT_DIR.\nTo activate run:\nexport PATH=$PATH_TO_ADD:\$PATH"
+  else
+    [ ! -e $HOME/work/sec/publics/scripts/dockeroo ] && echo "Sources need to be checked out into $HOME/work/sec first" && exit 1
+    local_dest=${1:-/opt}
+    docker run -it --rm --mount type=bind,src=$local_dest,target=/host_opt --mount type=bind,src=/$BASE_DIR,target=/$BASE_DIR,readonly -e HOST_OPT_DIR=$local_dest $($HOME/work/sec/publics/scripts/dockeroo image) $(readlink -f $0) $cmd
+  fi
 ;;
 _update)
 git -C $BASE_DIR pull -q
@@ -111,7 +135,7 @@ if [ -z "$PKG_UPDATED" ]; then
 fi
 ;;
 *)
-echo "Usage: `basename $0` update|hgrc|newproject"
+echo "Usage: `basename $0` update|hgrc|newproject|install_devtools"
 [ ! -z $cmd ] && exit 1
 ;;
 esac
