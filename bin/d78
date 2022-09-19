@@ -70,10 +70,18 @@ _install_devtools)
         echo "Skipping $dir"
       fi
     done
-    [ ! -z "$PATH_TO_ADD" ] && PATH_TO_ADD=${PATH_TO_ADD:1} && echo -e "Tools were installed under $HOST_OPT_DIR.\nTo activate run:\nexport PATH=$PATH_TO_ADD:\$PATH"
+    [ ! -z "$PATH_TO_ADD" ] && PATH_TO_ADD=${PATH_TO_ADD:1} && echo -e "\nTools were installed under $HOST_OPT_DIR.\nTo activate run:\nexport PATH=$PATH_TO_ADD:\$PATH"
+    if [ "$HOST_OPT_DIR" != "/opt" ]; then
+      echo -e "\nOr to have the tools in the same place as the container run this:\nsudo rsync --ignore-existing -raz $HOST_OPT_DIR/* /opt"
+      [ ! -z "$PATH_TO_ADD" ] && echo -e "export PATH=$PATH_TO_ADD:\$PATH" | sed "s|$HOST_OPT_DIR/|/opt/|g"
+    fi
   else
     [ ! -e $HOME/work/sec/publics/scripts/dockeroo ] && echo "Sources need to be checked out into $HOME/work/sec first" && exit 1
     local_dest=${1:-/opt}
+    if [ "$(readlink -f $(which docker))" == "/usr/bin/snap" ]; then
+      local_dest=${1:-$HOME/Downloads/devtools}
+    fi
+    [ "$local_dest" != "/opt" ] && mkdir -p $local_dest
     docker run -it --rm --mount type=bind,src=$local_dest,target=/host_opt --mount type=bind,src=/$BASE_DIR,target=/$BASE_DIR,readonly -e HOST_OPT_DIR=$local_dest $($HOME/work/sec/publics/scripts/dockeroo image) $(readlink -f $0) $cmd
   fi
 ;;
