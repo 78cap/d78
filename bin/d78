@@ -90,6 +90,9 @@ git -C $BASE_DIR pull -q
 [ $? != 0 ] && echo "Update failed" && exit 1
 if [[ "$(git -C $BASE_DIR remote get-url origin)" != *78cap/d78.git ]]; then
   git -C $BASE_DIR remote set-url origin https://github.com/78cap/d78.git
+  git -C $BASE_DIR branch -m master main
+  git -C $BASE_DIR fetch origin main
+  git -C $BASE_DIR branch main --set-upstream-to origin/main
   git -C $BASE_DIR pull -q
 fi
 REQ_VERSION_OF_HG=6.1
