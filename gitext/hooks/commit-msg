@@ -1,0 +1,29 @@
+#!/bin/bash
+
+if [ -e .corepos ]; then
+  . $(dirname $0)/../lib/corepo
+  init_corepos
+
+  commit_trailer=
+  commit_trailer_delim="\nCo-repos: "
+  errors=""
+  uncommitted=""
+  for repo_name in $corepos_list; do
+    init_rppo_path $repo_name
+    init_repo_status $repo_path
+    commit_trailer="$commit_trailer$commit_trailer_delim$repo_name@$repo_commit"
+    commit_trailer_delim=", "
+    [ ! -z "$repo_error" ] && errors="$errors\n$repo_name(${repo_path/$HOME/~}): $repo_error"
+    [ ! -z "$repo_uncommitted" ] && uncommitted="$uncommitted\n$repo_name(${repo_path/$HOME/~}): $repo_uncommitted"
+  done
+
+  if [ ! -z "$errors" ]; then
+   [ "$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreerrors)" != "true" ] && \
+   echo >&2  -e "Problems found in other repos:$errors" && exit 1
+  fi
+  if [ ! -z "$uncommitted" ]; then
+   [ "$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreuncomitted)" != "true" ] && \
+   echo >&2  -e "Uncommitted changes in other repos:$uncommitted" && exit 1
+  fi
+  [ ! -z "$commit_trailer" ] && echo -e "$commit_trailer" >> $1
+fi

@@ -1,0 +1,9 @@
+# Add the following to ~/.gitconfig:
+# [includeIf "hasconfig:remote.*.url:git@github.com:78cap/**"]
+#	path = work/d78/gitconfig78
+#
+[core]
+hooksPath = ~/work/d78/gitext/hooks
+
+[alias]
+corepo= !~/work/d78/gitext/bin/git-corepo

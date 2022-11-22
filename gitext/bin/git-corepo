@@ -1,0 +1,27 @@
+#!/bin/bash
+. $(dirname $0)/../lib/corepo
+cmd=$1
+shift
+case _$cmd in
+_status|_st)
+  init_corepos
+  for repo_name in $corepos_list; do
+    init_rppo_path $repo_name
+    init_repo_status $repo_path
+    if [ ! -z "$repo_error" ]; then
+      echo "$repo_path: $repo_error"
+    else
+      echo "$repo_path: $repo_commit"
+      [ ! -z "$repo_uncommitted" ] && [ "$1" == "-v" ] && echo -e "$repo_uncommitted"
+    fi
+  done
+  ;;
+_config)
+  echo "corepos.ignoreerrors=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreerrors)"
+  echo "corepos.ignoreuncomitted=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreuncomitted)"
+  ;;
+*)
+  [ ! -z "$cmd" ] && echo "Unsupported command '$cmd'"
+  echo -e "Usages:\n git corepo status [-v]\n git corepo config"
+  ;;
+esac
