@@ -15,8 +15,8 @@ function init_corepos() {
   corepos_list=$(grep "^\[repo " .corepos | tr -d '["]'"'" | tr  -s " " | cut -d" " -f2)
 }
 
-function init_rppo_path() {
-  repo_name=${1:?nost set}
+function init_repo_path() {
+  repo_name=${1:?not set}
   repo_path=$($GIT_EXEC_PATH/git config -f .corepos --get repo.$repo_name.path)
   if [ -z "$repo_path" ]; then
     repo_path=$(dirname $PWD)/$repo_name
@@ -32,7 +32,7 @@ function init_rppo_path() {
 }
 
 function init_repo_status() {
-  repo_path=${1:?nost set}
+  repo_path=${1:?not set}
   repo_error=
   repo_uncommitted=
   repo_commit=missing

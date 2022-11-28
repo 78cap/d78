@@ -9,7 +9,7 @@ if [ -e .corepos ]; then
   errors=""
   uncommitted=""
   for repo_name in $corepos_list; do
-    init_rppo_path $repo_name
+    init_repo_path $repo_name
     init_repo_status $repo_path
     commit_trailer="$commit_trailer$commit_trailer_delim$repo_name@$repo_commit"
     commit_trailer_delim=", "
