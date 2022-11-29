@@ -4,12 +4,18 @@
 function show_usage() {
   echo "Usages:"
   echo " git corepo --list|-l"
-  echo " git corepo --show-config"
-  echo " git corepo NAME --path"
-  echo " git corepo NAME --last-commit|--last"
-  echo " git corepo NAME --status [-v]"
-  echo " git corepo NAME GITCOMMAND"
-  echo " git corepo :all [--ignore-errors] GITCOMMAND"
+  echo " git corepo --list-config"
+  echo " git corepo status|st [-v]"
+  echo " git corepo :NAME --get-path"
+  echo " git corepo :NAME --get-ref [--sanitize]   # show commit referenced by the HEAD"
+  echo " git corepo :NAME [--show] GITCOMMAND      # execute/show git command for a corepo"
+  echo " git corepo :: [--show] GITCOMMAND         # execute/show git command for each corepo"
+  echo " git corepo ::: [--show] GITCOMMAND        # execute/show git command for each corepo, ignore errors"
+  echo ""
+  echo "Examples:"
+  echo " git corepo :: log -1 {ref}"
+  echo " git corepo :: checkout -b hotfix-branch {ref}"
+  echo " git corepo :: commit -m \"Fixes BUG-0078 in {name}\""
 }
 
 cmd=$1
@@ -19,78 +25,107 @@ _--list|_-l)
   init_corepos
   echo "$corepos_list"
   ;;
-_--show-config)
+_--list-config)
   echo "corepos.ignoreerrors=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreerrors)"
   echo "corepos.ignoreuncomitted=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreuncomitted)"
   ;;
-_:all)
+_status|_st)
   init_corepos
-  delim="Co-repo"
-  if [ "$1" == "--ignore-errors" ]; then
-    ignore_errors=1
-    shift
-  else
-    ignore_errors=
-  fi
   for corepo_name in $corepos_list; do
-    echo -e "$delim $corepo_name"
-    $0 $corepo_name "$@"
-    exit_code=$?
-    [ $exit_code != 0 ] && [ -z "ignore_errors" ] && exit $exit_code
-    delim="\nCo-repo"
+    init_repo_path $corepo_name
+    init_repo_status $repo_path
+    if [ ! -z "$repo_error" ]; then
+      echo >&2 "$repo_path: $repo_error"
+    else
+      echo "$repo_path: $repo_commit"
+      [ ! -z "$repo_uncommitted" ] && [ "$1" == "-v" ] && echo -e "$repo_uncommitted"
+    fi
   done
   ;;
-_[a-z]*)
-  corepo_name="$cmd"
+_::|_:::)
+  init_corepos
+  delim=""
+  ignore_errors=
+  [ "$cmd" == ":::" ] && ignore_errors=1
+  final_exit_code=0
+  for corepo_name in $corepos_list; do
+    echo -e "$delim[$corepo_name]"
+    $0 :$corepo_name "$@"
+    exit_code=$?
+    [ $exit_code != 0 ] && final_exit_code=$exit_code && [ -z "$ignore_errors" ] && exit $exit_code
+    delim="\n"
+  done
+  exit $final_exit_code
+  ;;
+_:[a-z]*)
+  corepo_name="${cmd:1}"
   cmd=$1
   shift
   init_corepos
   echo "$corepos_list" | grep "^$corepo_name\$" > /dev/null
-  [ $? != 0 ] && echo "Unknown co-repo $corepo_name" && exit 1
+  [ $? != 0 ] && echo >&2 "Unknown co-repo $corepo_name" && exit 1
+  git_cmd_prefix="env -u GIT_PREFIX $GIT_EXEC_PATH/"
+  if [ "$cmd" == "--show" ]; then
+    function echo_cmd() { printf "%q " "$@"; echo; }
+    git_cmd_prefix="echo_cmd "
+    cmd=$1
+    shift
+  fi
   case _$cmd in
-  _--last-commit|_--last)
-    for corepo_entry in $($GIT_EXEC_PATH/git log --format="%(trailers:key=Co-repos,valueonly)" -1); do
-      corepo_entry=${corepo_entry/,/}
-      if [[ "${corepo_entry}" == $corepo_name@* ]]; then
-        corepo_hash=${corepo_entry#$corepo_name@}
-        echo $corepo_hash
-        exit 0
-      fi
-    done
-    echo "Co-repo status for $corepo_name not found in commit message"
-    exit 1
+  _--get-ref)
+    init_repo_lastcommit $corepo_name "$@"
+    [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && exit 1
+    echo "$repo_lastcommit"
     ;;
-  _--path)
+  _--get-path)
     init_repo_path $corepo_name
     echo $repo_path
     ;;
-  _--status)
-    init_repo_path $corepo_name
-    init_repo_status $repo_path
-    [ ! -z "$repo_error" ] && echo "$repo_path: $repo_error" && exit 1
-    echo "$repo_path: $repo_commit"
-    [ ! -z "$repo_uncommitted" ] && [ "$1" == "-v" ] && echo -e "$repo_uncommitted"
-    :
-    ;;
   _[a-z]*)
     init_repo_path $corepo_name
-    $GIT_EXEC_PATH/git -C $repo_path $cmd "$@"
+    args=()
+    for arg in "$@"; do
+      for varname in ref path name; do
+        if [[ "$arg" == *"{$varname}"* ]]; then
+          case $varname in
+          name)
+            varval=$corepo_name
+            ;;
+          path)
+            varval="$repo_path"
+            ;;
+          ref)
+            init_repo_lastcommit $corepo_name --sanitize
+            [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && exit 1
+            varval=$repo_lastcommit
+            ;;
+          *)
+            echo >&2 "Unsupported variable {$varname}"
+            exit 1
+            ;;
+          esac
+          arg="${arg//\{$varname\}/$varval}"
+        fi
+      done
+      args+=("$arg")
+    done
+    ${git_cmd_prefix}git -C $repo_path $cmd "${args[@]}"
     ;;
-  _)
+  _|_--help)
     show_usage
     ;;
   *)
-    echo "Unsupported sub-command: $cmd"
+    echo >&2 "Unsupported sub-command: $cmd"
     show_usage
     exit 1
     ;;
   esac
   ;;
-_)
+_|--help)
   show_usage
   ;;
 *)
-  echo "Unsupported command: $cmd"
+  echo >&2 "Unsupported command: $cmd"
   show_usage
   exit 1
   ;;

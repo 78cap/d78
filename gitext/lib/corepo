@@ -57,3 +57,25 @@ function init_repo_status() {
     repo_error="directory $repo_path is missing"
   fi
 }
+
+function init_repo_lastcommit() {
+  repo_name=${1:?not set}
+  repo_lastcommit=
+  repo_lastcommit_err=
+  for corepo_entry in $($GIT_EXEC_PATH/git log --format="%(trailers:key=Co-repos,valueonly)" -1); do
+    corepo_entry=${corepo_entry/,/}
+    if [[ "${corepo_entry}" == $repo_name@* ]]; then
+      repo_lastcommit=${corepo_entry#$repo_name@}
+      break
+    fi
+  done
+  if [ -z "$repo_lastcommit" ]; then
+    repo_lastcommit_err="Missing co-repo reference for $corepo_name: $($GIT_EXEC_PATH/git log -1)"
+  elif [ "$2" == "--sanitize" ]; then
+    if [[ "$repo_lastcommit" =~ ^[0-9a-f]+[+]?$ ]]; then
+      repo_lastcommit="${repo_lastcommit/+/}"
+    else
+      repo_lastcommit_err="Invalid co-repo reference for $corepo_name: $repo_lastcommit"
+    fi
+  fi
+}
