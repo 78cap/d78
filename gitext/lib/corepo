@@ -21,13 +21,15 @@ function init_repo_path() {
   if [ -z "$repo_path" ]; then
     repo_path=$(dirname $PWD)/$repo_name
   else
-    repo_path="${repo_path/\%repo/$repo_name}"
-    repo_path="${repo_path/\%name/$repo_name}"
-    repo_path="${repo_path/\%root\//}"
-    [ "$repo_path" == "%root" ] && repo_path=$corepos_root
-    repo_path="${repo_path//\/.\//\/}"
+    repo_path="${repo_path/\{repo\}/$repo_name}"
+    repo_path="${repo_path/\{name\}/$repo_name}"
+    repo_path="${repo_path/\{root\}/.}"
     [ "${repo_path:0:2}" == "~/" ] && repo_path="${HOME:?not set}${repo_path:1}"
     [ "${repo_path:0:1}" != "/" ] && repo_path=$corepos_root/$repo_path
+    repo_path="${repo_path//\/.\//\/}"
+    while [ "${repo_path: -2}" == "/." ]; do
+        repo_path="${repo_path:0:${#repo_path}-2}"
+    done
   fi
 }
 
