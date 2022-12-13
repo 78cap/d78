@@ -7,3 +7,6 @@ hooksPath = ~/work/d78/gitext/hooks
 
 [alias]
 corepo= !~/work/d78/gitext/bin/git-corepo
+
+[blame]
+ignoreRevsFile = ~/work/sec/.git-blame-ignore-revs
