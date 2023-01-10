@@ -18,11 +18,11 @@ if [ -e .corepos ]; then
   done
 
   if [ ! -z "$errors" ]; then
-   [ "$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreerrors)" != "true" ] && \
+   [ "$($GIT_CMD config --type=bool --get corepos.ignoreerrors)" != "true" ] && \
    echo >&2  -e "Problems found in other repos:$errors" && exit 1
   fi
   if [ ! -z "$uncommitted" ]; then
-   [ "$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreuncomitted)" != "true" ] && \
+   [ "$($GIT_CMD config --type=bool --get corepos.ignoreuncomitted)" != "true" ] && \
    echo >&2  -e "Uncommitted changes in other repos:$uncommitted" && exit 1
   fi
   [ ! -z "$commit_trailer" ] && echo -e "$commit_trailer" >> $1

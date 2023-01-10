@@ -1,9 +1,13 @@
 #!/bin/bash
+
+GIT_CMD=git
+[ ! -z "$GIT_EXEC_PATH" ] && GIT_CMD=$GIT_EXEC_PATH/git
+
 function init_corepos() {
   corepos_list=
   if [ -e .corepos ]; then
     corepos_root=$PWD
-    repo_path=$($GIT_EXEC_PATH/git config -f .corepos --get repo.path)
+    repo_path=$($GIT_CMD config -f .corepos --get repo.path)
     if [ ! -z "$repo_path" ]; then
       for i in ${repo_path//\// }; do
         corepos_root=$(dirname $corepos_root)
@@ -17,7 +21,7 @@ function init_corepos() {
 
 function init_repo_path() {
   repo_name=${1:?not set}
-  repo_path=$($GIT_EXEC_PATH/git config -f .corepos --get repo.$repo_name.path)
+  repo_path=$($GIT_CMD config -f .corepos --get repo.$repo_name.path)
   if [ -z "$repo_path" ]; then
     repo_path=$(dirname $PWD)/$repo_name
   else
@@ -39,17 +43,17 @@ function init_repo_status() {
   repo_uncommitted=
   repo_commit=missing
   if [ -d $repo_path ]; then
-    repo_commit=$(env -u GIT_INDEX_FILE -u GIT_PREFIX $GIT_EXEC_PATH/git -C $repo_path rev-parse --short=12 HEAD 2>&1)
+    repo_commit=$(env -u GIT_INDEX_FILE -u GIT_PREFIX $GIT_CMD -C $repo_path rev-parse --short=12 HEAD 2>&1)
     if [ $? != 0 ]; then
       repo_error="cannot get status: $repo_commit"
       repo_commit=unknown
     else
-      repo_status=$(env -u GIT_INDEX_FILE -u GIT_PREFIX $GIT_EXEC_PATH/git -C $repo_path status --untracked-files=no --porcelain 2>&1)
+      repo_status=$(env -u GIT_INDEX_FILE -u GIT_PREFIX $GIT_CMD -C $repo_path status --untracked-files=no --porcelain 2>&1)
       if [ $? != 0 ]; then
         repo_error="cannot get status: $repo_status"
       elif [ ! -z "$repo_status" ]; then
       # git status --short --ignore-submodules --untracked-files=no
-      # $GIT_EXEC_PATH/git -C $repo_path diff # -index HEAD
+      # $GIT_CMD -C $repo_path diff # -index HEAD
       # [ $? != 0 ] &&
         repo_commit="$repo_commit+"
         repo_uncommitted="uncommitted changes:\n$repo_status"
@@ -64,7 +68,7 @@ function init_repo_lastcommit() {
   repo_name=${1:?not set}
   repo_lastcommit=
   repo_lastcommit_err=
-  for corepo_entry in $($GIT_EXEC_PATH/git log --format="%(trailers:key=Co-repos,valueonly)" -1); do
+  for corepo_entry in $($GIT_CMD log --format="%(trailers:key=Co-repos,valueonly)" -1); do
     corepo_entry=${corepo_entry/,/}
     if [[ "${corepo_entry}" == $repo_name@* ]]; then
       repo_lastcommit=${corepo_entry#$repo_name@}
@@ -72,7 +76,7 @@ function init_repo_lastcommit() {
     fi
   done
   if [ -z "$repo_lastcommit" ]; then
-    repo_lastcommit_err="Missing co-repo reference for $corepo_name: $($GIT_EXEC_PATH/git log -1)"
+    repo_lastcommit_err="Missing co-repo reference for $corepo_name: $($GIT_CMD log -1)"
   elif [ "$2" == "--sanitize" ]; then
     if [[ "$repo_lastcommit" =~ ^[0-9a-f]+[+]?$ ]]; then
       repo_lastcommit="${repo_lastcommit/+/}"

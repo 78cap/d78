@@ -26,8 +26,8 @@ _--list|_-l)
   echo "$corepos_list"
   ;;
 _--list-config)
-  echo "corepos.ignoreerrors=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreerrors)"
-  echo "corepos.ignoreuncomitted=$($GIT_EXEC_PATH/git config --type=bool --get corepos.ignoreuncomitted)"
+  echo "corepos.ignoreerrors=$($GIT_CMD config --type=bool --get corepos.ignoreerrors)"
+  echo "corepos.ignoreuncomitted=$($GIT_CMD config --type=bool --get corepos.ignoreuncomitted)"
   ;;
 _status|_st)
   init_corepos
@@ -64,10 +64,10 @@ _:[a-z]*)
   init_corepos
   echo "$corepos_list" | grep "^$corepo_name\$" > /dev/null
   [ $? != 0 ] && echo >&2 "Unknown co-repo $corepo_name" && exit 1
-  git_cmd_prefix="env -u GIT_PREFIX $GIT_EXEC_PATH/"
+  corepo_git_cmd="env -u GIT_PREFIX $GIT_CMD"
   if [ "$cmd" == "--show" ]; then
     function echo_cmd() { printf "%q " "$@"; echo; }
-    git_cmd_prefix="echo_cmd "
+    corepo_git_cmd="echo_cmd git"
     cmd=$1
     shift
   fi
@@ -109,7 +109,7 @@ _:[a-z]*)
       done
       args+=("$arg")
     done
-    ${git_cmd_prefix}git -C $repo_path $cmd "${args[@]}"
+    $corepo_git_cmd -C $repo_path $cmd "${args[@]}"
     ;;
   _|_--help)
     show_usage
