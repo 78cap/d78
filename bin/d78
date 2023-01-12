@@ -97,6 +97,7 @@ if [[ "$(git -C $BASE_DIR remote get-url origin)" != *78cap/d78.git ]]; then
 fi
 REQ_VERSION_OF_HG=6.1
 REQ_VERSION_OF_PYTHON=3.6.3
+REQ_VERSION_OF_GIT=2.36
 PKG_DIR=$BASE_DIR/bin/.hgpkg
 ################################
 # This is common for d78 and s78
@@ -127,26 +128,29 @@ function mv_pkg() {
 }
 VERSION_OF_HG=
 VERSION_OF_PYTHON=
+VERSION_OF_GIT=
 PKG_UPDATED=
 if [ -e ${PKG_DIR:?not set}/__versions__ ]; then
   . $PKG_DIR/__versions__
 fi
 download_pkg mercurial ${REQ_VERSION_OF_HG:?not set} $VERSION_OF_HG
 download_pkg python ${REQ_VERSION_OF_PYTHON:?not set} $VERSION_OF_PYTHON
+download_pkg git ${REQ_VERSION_OF_GIT:?not set} $VERSION_OF_GIT
 mv_pkg mercurial $REQ_VERSION_OF_HG $VERSION_OF_HG
 mv_pkg python $REQ_VERSION_OF_PYTHON $VERSION_OF_PYTHON
-for name in mercurial python; do
+mv_pkg git $REQ_VERSION_OF_GIT $VERSION_OF_GIT
+for name in mercurial python git; do
   [ -e $PKG_DIR/$name-old ] && rm -rf $PKG_DIR/$name-old
 done;
 if [ ! -z "$PKG_UPDATED" ]; then
-  echo -e "VERSION_OF_HG=$REQ_VERSION_OF_HG\nVERSION_OF_PYTHON=$REQ_VERSION_OF_PYTHON">$PKG_DIR/__versions__
-  echo "Updated packages:"
+  echo -e "VERSION_OF_HG=$REQ_VERSION_OF_HG\nVERSION_OF_PYTHON=$REQ_VERSION_OF_PYTHON\nVERSION_OF_GIT=$REQ_VERSION_OF_GIT">$PKG_DIR/__versions__
+  echo "Updated D78 packages:"
   cat $PKG_DIR/__versions__
 fi
 ################################
 if [ -z "$PKG_UPDATED" ]; then
-  echo "Packages up-to-date:"
-  cat $PKG_DIR/__versions__
+  echo "D78 Packages up-to-date"
+  #cat $PKG_DIR/__versions__
 fi
 ;;
 *)
