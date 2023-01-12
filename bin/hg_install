@@ -10,25 +10,6 @@ function write_hgrc() {
       HG_NAME=`git config --get user.name`
       HG_EMAIL=`git config --get user.email`
   fi
-  if [ "${HG_NAME:-$USER}" == "$USER" ]; then
-      u_zmurtha="Zack Murtha"
-      u_fcorrao="Frank Corrao"
-      u_pkritikos="Peter Kritikos"
-      u_njaggi="Neeraj Jaggi"
-      u_asissier="Adrian Sisser"
-      u_scash="Stephen Cash"
-      u_ashi="Alex Shi"
-      u_dzhang="David Zhang"
-      u_ygan="Yu Gan"
-      u_drappaport="David Rappaport"
-      u_gvenkat="Girish Venkat"
-      u_aturcan="Sandu Turcan"
-      u_mmichaux="Michael Michaux"
-      u_sbalaji="Shreyas Balaji"
-      u_qliu="Qing Liu"
-      u_jzhou="Jimmy Zhou"
-      eval "HG_NAME=\$u_$USER"
-  fi
 HGRC="""\
 [ui]
 username = ${HG_NAME:-$USER} <${HG_EMAIL:-$USER@seveneightcapital.com}>
