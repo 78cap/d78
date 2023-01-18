@@ -1,0 +1,12 @@
+#!/bin/bash
+
+GIT_CMD=git
+[ ! -z "$GIT_EXEC_PATH" ] && GIT_CMD=$GIT_EXEC_PATH/git
+
+branch="$($GIT_CMD rev-parse --abbrev-ref HEAD)"
+protected_branches="$($GIT_CMD config --get cap78.protectedbranches || $GIT_CMD config --get init.defaultbranch || echo main)"
+
+if [[ " $protected_branches " == *" $branch "* ]]; then
+  echo "You can't commit directly to $protected_branches in ${PWD/$HOME/~}. Run git help78 for more info."
+  exit 1
+fi
