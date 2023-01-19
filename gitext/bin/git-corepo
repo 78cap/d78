@@ -14,7 +14,7 @@ function show_usage() {
   echo ""
   echo "Examples:"
   echo " git corepo :: log -1 {ref}"
-  echo " git corepo :: checkout -b hotfix-branch {ref}"
+  echo " git corepo :: checkout -b {cbranch} {ref}   # checkout code in corepos based on the current commit and branch"
   echo " git corepo :: commit -m \"Fixes BUG-0078 in {name}\""
 }
 
@@ -83,9 +83,10 @@ _:[a-z]*)
     ;;
   _[a-z]*)
     init_repo_path $corepo_name
+    cbranch=
     args=()
     for arg in "$@"; do
-      for varname in ref path name; do
+      for varname in ref path name cbranch; do
         if [[ "$arg" == *"{$varname}"* ]]; then
           case $varname in
           name)
@@ -98,6 +99,10 @@ _:[a-z]*)
             init_repo_lastcommit $corepo_name --sanitize
             [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && exit 1
             varval=$repo_lastcommit
+            ;;
+          cbranch)
+            [ -z "$cbrance" ] && cbranch=$($GIT_CMD rev-parse --abbrev-ref HEAD)
+            varval=$cbranch
             ;;
           *)
             echo >&2 "Unsupported variable {$varname}"
