@@ -4,6 +4,7 @@
 #
 [core]
 hooksPath = ~/work/d78/gitext/hooks
+#attributesFile = ~/work/d78/gitext/attributes
 
 [alias]
 corepo= !~/work/d78/gitext/bin/git-corepo
@@ -11,3 +12,8 @@ help78= !~/work/d78/gitext/bin/git-help78
 
 [blame]
 ignoreRevsFile = ~/work/sec/.git-blame-ignore-revs
+
+[filter "nbstripout"]
+clean = ~/work/d78/bin/nb_clear_output.py
+smudge = cat
+required = true

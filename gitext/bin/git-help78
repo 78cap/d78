@@ -6,4 +6,8 @@ git help78   # display this message
 git corepo   # a way to manage dependency repos
 git config --local cap78.protectedbranches ""         # disable branch protection for a given repo (local only)
 git config --local --unset cap78.protectedbranches    # re-enable branch protection for a given repo
+
+Example of .gitattributes
+-------------------------
 EOF
+cat $(dirname $(dirname $0))/attributes
