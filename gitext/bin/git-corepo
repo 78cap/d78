@@ -18,6 +18,72 @@ function show_usage() {
   echo " git corepo :: commit -m \"Fixes BUG-0078 in {name}\""
 }
 
+function exec_corepo_cmd() {
+  cmd=$1
+  shift
+  corepo_git_cmd="env -u GIT_PREFIX $GIT_CMD"
+  if [ "$cmd" == "--show" ]; then
+    function echo_cmd() { printf "%q " "$@"; echo; }
+    corepo_git_cmd="echo_cmd git"
+    cmd=$1
+    shift
+  fi
+  case _$cmd in
+  _--get-ref)
+    init_repo_lastcommit $corepo_name "$@"
+    [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && return 1
+    echo "$repo_lastcommit"
+    ;;
+  _--get-path)
+    init_repo_path $corepo_name
+    echo $repo_path
+    ;;
+  _[a-z]*)
+    init_repo_path $corepo_name
+    cbranch=
+    args=()
+    for arg in "$@"; do
+      for varname in ref path name cbranch; do
+        if [[ "$arg" == *"{$varname}"* ]]; then
+          case $varname in
+          name)
+            varval=$corepo_name
+            ;;
+          path)
+            varval="$repo_path"
+            ;;
+          ref)
+            init_repo_lastcommit $corepo_name --sanitize
+            [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && return 1
+            varval=$repo_lastcommit
+            ;;
+          cbranch)
+            [ -z "$cbranch" ] && cbranch=$($GIT_CMD rev-parse --abbrev-ref HEAD)
+            varval=$cbranch
+            ;;
+          *)
+            echo >&2 "Unsupported variable {$varname}"
+            return 1
+            ;;
+          esac
+          arg="${arg//\{$varname\}/$varval}"
+        fi
+      done
+      args+=("$arg")
+    done
+    $corepo_git_cmd -C $repo_path $cmd "${args[@]}"
+    ;;
+  _|_--help)
+    show_usage
+    ;;
+  *)
+    echo >&2 "Unsupported sub-command: $cmd"
+    show_usage
+    return 1
+    ;;
+  esac
+}
+
 cmd=$1
 shift
 case _$cmd in
@@ -50,7 +116,7 @@ _::|_:::)
   final_exit_code=0
   for corepo_name in $corepos_list; do
     echo -e "$delim[$corepo_name]"
-    $0 :$corepo_name "$@"
+    (exec_corepo_cmd "$@")
     exit_code=$?
     [ $exit_code != 0 ] && final_exit_code=$exit_code && [ -z "$ignore_errors" ] && exit $exit_code
     delim="\n"
@@ -59,72 +125,10 @@ _::|_:::)
   ;;
 _:[a-z]*)
   corepo_name="${cmd:1}"
-  cmd=$1
-  shift
   init_corepos
   echo "$corepos_list" | grep "^$corepo_name\$" > /dev/null
   [ $? != 0 ] && echo >&2 "Unknown co-repo $corepo_name" && exit 1
-  corepo_git_cmd="env -u GIT_PREFIX $GIT_CMD"
-  if [ "$cmd" == "--show" ]; then
-    function echo_cmd() { printf "%q " "$@"; echo; }
-    corepo_git_cmd="echo_cmd git"
-    cmd=$1
-    shift
-  fi
-  case _$cmd in
-  _--get-ref)
-    init_repo_lastcommit $corepo_name "$@"
-    [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && exit 1
-    echo "$repo_lastcommit"
-    ;;
-  _--get-path)
-    init_repo_path $corepo_name
-    echo $repo_path
-    ;;
-  _[a-z]*)
-    init_repo_path $corepo_name
-    cbranch=
-    args=()
-    for arg in "$@"; do
-      for varname in ref path name cbranch; do
-        if [[ "$arg" == *"{$varname}"* ]]; then
-          case $varname in
-          name)
-            varval=$corepo_name
-            ;;
-          path)
-            varval="$repo_path"
-            ;;
-          ref)
-            init_repo_lastcommit $corepo_name --sanitize
-            [ ! -z "$repo_lastcommit_err" ] && echo >&2 "$repo_lastcommit_err" && exit 1
-            varval=$repo_lastcommit
-            ;;
-          cbranch)
-            [ -z "$cbrance" ] && cbranch=$($GIT_CMD rev-parse --abbrev-ref HEAD)
-            varval=$cbranch
-            ;;
-          *)
-            echo >&2 "Unsupported variable {$varname}"
-            exit 1
-            ;;
-          esac
-          arg="${arg//\{$varname\}/$varval}"
-        fi
-      done
-      args+=("$arg")
-    done
-    $corepo_git_cmd -C $repo_path $cmd "${args[@]}"
-    ;;
-  _|_--help)
-    show_usage
-    ;;
-  *)
-    echo >&2 "Unsupported sub-command: $cmd"
-    show_usage
-    exit 1
-    ;;
-  esac
+  exec_corepo_cmd "$@"
   ;;
 _|--help)
   show_usage
