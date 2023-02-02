@@ -17,6 +17,7 @@ _hgrc)
 _newproject)
 [ -z "$1" ] && echo "Usage: $0 $cmd PROJECT_DIR" && exit 1
 pdir=${1:?not set}
+pdir=$(readlink -f $pdir)
 [ -e $pdir/build.gradle ] && echo "Project already exists in $pdir" && exit 1
 pname=`basename $pdir`
 project_name=$pname
@@ -27,11 +28,14 @@ else
 fi
 
 msg_add=""
+git_init=0
 if [ -e `dirname $pdir`/build-includes.gradle ]; then
   [ "${project_name:0:6}" != "cap78_" ] && project_name=cap78_$project_name
   msg_add="add '$pname': '$project_name' to `dirname $pdir`/build-includes.gradle"
 elif [ -e `dirname $pdir`/settings.gradle ]; then
   msg_add="add '$pname' to `dirname $pdir`/settings.gradle"
+elif [ "$(basename $(dirname $pdir))" == "apps" ]; then
+  git_init=1
 elif [ "$(basename $(dirname $pdir))" != "apps" ]; then
   echo -e "Directory `dirname $pdir` doesn't have a settings.gradle or build-includes.gradle\nThere will be no way to add the project to the list"
   exit 1
@@ -57,8 +61,20 @@ cap78.pySetup {
 EOF
 [ ! -e $pdir/src/main/python/cap78/__init__.py ] && echo "__import__('pkg_resources').declare_namespace(__name__)" > $pdir/src/main/python/cap78/__init__.py
 [ ! -e $pdir/src/main/python/cap78/$package_name/__init__.py ] && touch $pdir/src/main/python/cap78/$package_name/__init__.py
+if [ "$git_init" == "1" ]; then
+  [ ! -e $pdir/.corepos ] && echo -e "[repo]\n  path = apps/{name}\n\n[repo \"sec\"]\n  path = {root}" > $pdir/.corepos
+  [ ! -e $pdir/.gitignore ] && echo -e "*.pyc\n*~\n*.egg-info\n.idea/\n.vscode/\n.fleet/\n.gradle/\n.cache/\n*.orig\n" > $pdir/.gitignore
+fi
 echo "Project $project_name created in $pdir"
 [ ! -z "$msg_add" ] && echo "Run git add $pdir" && echo "And $msg_add"
+if [ "$git_init" == "1" ]; then
+   echo "Run this next:"
+   echo "cd $pdir"
+   [ ! -e $pdir/.git ] && echo "git init"
+   echo "git add ."
+   echo "git commit -m \"Initial commit of $project_name\""
+   [ ! -e $pdir/.git ] && echo -e "git remote add origin git@github.com:78cap/$project_name\ngit push --set-upstream origin main"
+fi
 ;;
 _install_devtools)
   [ "`uname`" == "Darwin" ] && echo "Sorry, this is not supported under MacOS" && exit 1
