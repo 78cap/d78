@@ -21,6 +21,10 @@ function init_corepos() {
 
 function init_repo_path() {
   repo_name=${1:?not set}
+  if [ "$repo_name" == "." ]; then
+    repo_path=$PWD
+    return
+  fi
   repo_path=$($GIT_CMD config -f .corepos --get repo.$repo_name.path)
   if [ -z "$repo_path" ]; then
     repo_path=$(dirname $PWD)/$repo_name
@@ -68,6 +72,10 @@ function init_repo_lastcommit() {
   repo_name=${1:?not set}
   repo_lastcommit=
   repo_lastcommit_err=
+  if [ "$corepo_name" == "." ]; then
+      repo_lastcommit=HEAD
+      return
+  fi
   for corepo_entry in $($GIT_CMD log --format="%(trailers:key=Co-repos,valueonly)" -1); do
     corepo_entry=${corepo_entry/,/}
     if [[ "${corepo_entry}" == $repo_name@* ]]; then

@@ -3,14 +3,16 @@
 
 function show_usage() {
   echo "Usages:"
-  echo " git corepo --list|-l"
+  echo " git corepo --list[+]|-l[+]"
   echo " git corepo --list-config"
-  echo " git corepo status|st [-v]"
+  echo " git corepo status[+]|st[+] [-v]"
   echo " git corepo :NAME --get-path"
   echo " git corepo :NAME --get-ref [--sanitize]   # show commit referenced by the HEAD"
   echo " git corepo :NAME [--show] GITCOMMAND      # execute/show git command for a corepo"
   echo " git corepo :: [--show] GITCOMMAND         # execute/show git command for each corepo"
   echo " git corepo ::: [--show] GITCOMMAND        # execute/show git command for each corepo, ignore errors"
+  echo " git corepo ::+ [--show] GITCOMMAND        # execute/show git command for each corepo and current"
+  echo " git corepo :::+ [--show] GITCOMMAND       # execute/show git command for each corepo and current, ignore errors"
   echo ""
   echo "Examples:"
   echo " git corepo :: log -1 {ref}"
@@ -48,6 +50,7 @@ function exec_corepo_cmd() {
           case $varname in
           name)
             varval=$corepo_name
+            [ "$corepo_name" == "." ] && varval=$(basename $repo_path)
             ;;
           path)
             varval="$repo_path"
@@ -84,8 +87,11 @@ function exec_corepo_cmd() {
   esac
 }
 
-cmd=$1
+cmd_p=$1
 shift
+cmd="${cmd_p%+}"
+include_self=
+[ "$cmd" != "$cmd_p" ] && include_self="."
 case _$cmd in
 _--list|_-l)
   init_corepos
@@ -97,7 +103,7 @@ _--list-config)
   ;;
 _status|_st)
   init_corepos
-  for corepo_name in $corepos_list; do
+  for corepo_name in $corepos_list $include_self; do
     init_repo_path $corepo_name
     init_repo_status $repo_path
     if [ ! -z "$repo_error" ]; then
@@ -114,8 +120,8 @@ _::|_:::)
   ignore_errors=
   [ "$cmd" == ":::" ] && ignore_errors=1
   final_exit_code=0
-  for corepo_name in $corepos_list; do
-    echo -e "$delim[$corepo_name]"
+  for corepo_name in $corepos_list $include_self; do
+    [ "$corepo_name" != "." ] && echo -e "$delim[$corepo_name]" || echo -e "$delim[$(basename $PWD)]"
     (exec_corepo_cmd "$@")
     exit_code=$?
     [ $exit_code != 0 ] && final_exit_code=$exit_code && [ -z "$ignore_errors" ] && exit $exit_code
@@ -128,6 +134,10 @@ _:[a-z]*)
   init_corepos
   echo "$corepos_list" | grep "^$corepo_name\$" > /dev/null
   [ $? != 0 ] && echo >&2 "Unknown co-repo $corepo_name" && exit 1
+  exec_corepo_cmd "$@"
+  ;;
+_:)
+  corepo_name=.
   exec_corepo_cmd "$@"
   ;;
 _|--help)
