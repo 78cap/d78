@@ -181,11 +181,15 @@ _do)
     U) loop_list="$unmodified_repos"; [ ! -z "$modified_repos" ] && echo "There are pending changes in $modified_repos" >&2 && exit 1;;
     esac
   fi
-  [ -z "$1" ] && \
-    loop_list="${loop_list//$'\n'/ }" &&\
-    loop_list="${loop_list## }" &&\
-    loop_list="${loop_list%% }" &&\
-    echo -e "Missing command for [$loop_list]\n Usage: git corepo $cmd GITCOMMAND" >&2 && exit 1
+  if [ -z "$1" ]; then
+    [[ " $loop_list " == *" . "* ]] && loop_list=" $loop_list " && loop_list="${loop_list/ . / $(basename $PWD) }"
+    loop_list="${loop_list//$'\n'/ }"
+    loop_list="${loop_list//  / }"
+    loop_list="${loop_list## }"
+    loop_list="${loop_list%% }"
+    echo -e "Missing command for [$loop_list]\n Usage: git corepo $cmd GITCOMMAND" >&2
+    exit 1
+  fi
   [ -z "$loop_list" ] && echo "Nothing to do" && exit 0
   delim=""
   for corepo_name in $loop_list; do
@@ -201,7 +205,14 @@ _:[a-z]*)
   corepo_name="${cmd:1}"
   init_corepos
   echo "$corepos_list" | grep "^$corepo_name\$" > /dev/null
-  [ $? != 0 ] && echo >&2 "Unknown co-repo $corepo_name" && exit 1
+  if [ $? != 0 ]; then
+    if [ "$corepo_name" == "$(basename $PWD)" ]; then
+      corepo_name=.
+    else
+      echo >&2 "Unknown co-repo $corepo_name"
+      exit 1
+    fi
+  fi
   exec_corepo_cmd "$@"
   ;;
 _:)
