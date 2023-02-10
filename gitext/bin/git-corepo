@@ -3,28 +3,40 @@
 
 function show_usage() {
   echo "Usages:"
-  echo " git corepo --list[+]|-l[+]"
+  echo " git corepo --list|-l"
   echo " git corepo --list-config"
-  echo " git corepo status[+]|st[+] [-v]"
+  echo " git corepo status|st [-a][-v]"
+  echo " git corepo do [-a|-c|-n|-m|-M|-u|-U] GITCOMMAND   # execute git command on corepos"
   echo " git corepo :NAME --get-path"
-  echo " git corepo :NAME --get-ref [--sanitize]   # show commit referenced by the HEAD"
-  echo " git corepo :NAME [--show] GITCOMMAND      # execute/show git command for a corepo"
-  echo " git corepo :: [--show] GITCOMMAND         # execute/show git command for each corepo"
-  echo " git corepo ::: [--show] GITCOMMAND        # execute/show git command for each corepo, ignore errors"
-  echo " git corepo ::+ [--show] GITCOMMAND        # execute/show git command for each corepo and current"
-  echo " git corepo :::+ [--show] GITCOMMAND       # execute/show git command for each corepo and current, ignore errors"
+  echo " git corepo :NAME --get-ref [--sanitize]   # show hash referenced by the last commit in the main repo"
+  echo " git corepo :NAME [-n] GITCOMMAND          # execute git command for a corepo"
+  echo ""
+  echo " Supported variables:"
+  echo "  {cbranch}  current branch in the main repo"
+  echo "  {name}     corepo name"
+  echo "  {ref}      corepo hash referenced by the last commit in the main repo"
+  echo ""
+  echo " Options:"
+  echo "  -a  include main repo"
+  echo "  -u  include only unmodified repos (clean git status)"
+  echo "  -U  same, but fail if at least one modified repo found"
+  echo "  -m  include only modified repos (uncommitted changes)"
+  echo "  -M  same, but fail if no modified repos found"
+  echo "  -c  continue on error"
+  echo "  -n  dry-run, only show the command"
+  echo "  -v  verbose"
   echo ""
   echo "Examples:"
-  echo " git corepo :: log -1 {ref}"
-  echo " git corepo :: checkout -b {cbranch} {ref}   # checkout code in corepos based on the current commit and branch"
-  echo " git corepo :: commit -m \"Fixes BUG-0078 in {name}\""
+  echo " git corepo do -c log -1 {ref}"
+  echo " git corepo do -U checkout -b {cbranch} {ref}   # checkout code in corepos based on the current commit and branch"
+  echo " git corepo do -ma commit -m \"Fixes BUG-0078\""
 }
 
 function exec_corepo_cmd() {
   cmd=$1
   shift
   corepo_git_cmd="env -u GIT_PREFIX $GIT_CMD"
-  if [ "$cmd" == "--show" ]; then
+  if [ "$cmd" == "-n" ]; then
     function echo_cmd() { printf "%q " "$@"; echo; }
     corepo_git_cmd="echo_cmd git"
     cmd=$1
@@ -87,11 +99,8 @@ function exec_corepo_cmd() {
   esac
 }
 
-cmd_p=$1
+cmd=$1
 shift
-cmd="${cmd_p%+}"
-include_self=
-[ "$cmd" != "$cmd_p" ] && include_self="."
 case _$cmd in
 _--list|_-l)
   init_corepos
@@ -103,26 +112,81 @@ _--list-config)
   ;;
 _status|_st)
   init_corepos
+  include_self=
+  verbose=
+  OPTIND=1
+  while getopts "av" opt; do
+      case $opt in
+      a) include_self="." ;;
+      v) verbose="1" ;;
+      \?) echo "Invalid command-line: $@" >&2; exit 1;;
+      esac
+  done
+  final_exit_code=0
   for corepo_name in $corepos_list $include_self; do
     init_repo_path $corepo_name
     init_repo_status $repo_path
     if [ ! -z "$repo_error" ]; then
       echo >&2 "$repo_path: $repo_error"
+      final_exit_code=1
     else
       echo "$repo_path: $repo_commit"
-      [ ! -z "$repo_uncommitted" ] && [ "$1" == "-v" ] && echo -e "$repo_uncommitted"
+      [ ! -z "$repo_uncommitted" ] && [ ! -z "$verbose" ] && echo -e "$repo_uncommitted"
     fi
   done
+  exit $final_exit_code
   ;;
-_::|_:::)
-  init_corepos
-  delim=""
+_do)
+  include_self=
   ignore_errors=
-  [ "$cmd" == ":::" ] && ignore_errors=1
+  repo_selection=
+  show_option=
+  OPTIND=1
+  while getopts "acnuUmM" opt; do
+      case $opt in
+      a) include_self="." ;;
+      c) ignore_errors=1 ;;
+      u|U|m|M) repo_selection=$opt ;;
+      n) show_option=-n ;;
+      \?) echo "Invalid command-line: $@" >&2; exit 1;;
+      esac
+  done
+  shift "$((OPTIND-1))"
+
+  init_corepos
   final_exit_code=0
-  for corepo_name in $corepos_list $include_self; do
+  loop_list="$corepos_list $include_self"
+  if [ ! -z "$repo_selection" ]; then
+    modified_repos=
+    unmodified_repos=
+    for corepo_name in $corepos_list $include_self; do
+      init_repo_path $corepo_name
+      init_repo_status $repo_path
+      if [ ! -z "$repo_error" ]; then
+        echo >&2 "$repo_path: $repo_error"
+        final_exit_code=1
+      else
+        if [ -z "$repo_uncommitted" ]; then
+          unmodified_repos="$unmodified_repos $corepo_name"
+        else
+          modified_repos="$modified_repos $corepo_name"
+        fi
+      fi
+    done
+    [ "$final_exit_code" != "0" ] && exit $final_exit_code
+    case $repo_selection in
+    m) loop_list="$modified_repos" ;;
+    u) loop_list="$unmodified_repos" ;;
+    M) loop_list="$modified_repos"; [ -z "$modified_repos" ] && echo "No modified repos found" >&2 && exit 1;;
+    U) loop_list="$unmodified_repos"; [ ! -z "$modified_repos" ] && echo "There are pending changes in $modified_repos" >&2 && exit 1;;
+    esac
+  fi
+  [ -z "$1" ] && echo -e "Missing command for [${loop_list## }]\n Usage: git corepo $cmd GITCOMMAND" >&2 && exit 1
+  [ -z "$loop_list" ] && echo "Nothing to do" && exit 0
+  delim=""
+  for corepo_name in $loop_list; do
     [ "$corepo_name" != "." ] && echo -e "$delim[$corepo_name]" || echo -e "$delim[$(basename $PWD)]"
-    (exec_corepo_cmd "$@")
+    (exec_corepo_cmd $show_option "$@")
     exit_code=$?
     [ $exit_code != 0 ] && final_exit_code=$exit_code && [ -z "$ignore_errors" ] && exit $exit_code
     delim="\n"
