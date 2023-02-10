@@ -181,7 +181,11 @@ _do)
     U) loop_list="$unmodified_repos"; [ ! -z "$modified_repos" ] && echo "There are pending changes in $modified_repos" >&2 && exit 1;;
     esac
   fi
-  [ -z "$1" ] && echo -e "Missing command for [${loop_list## }]\n Usage: git corepo $cmd GITCOMMAND" >&2 && exit 1
+  [ -z "$1" ] && \
+    loop_list="${loop_list//$'\n'/ }" &&\
+    loop_list="${loop_list## }" &&\
+    loop_list="${loop_list%% }" &&\
+    echo -e "Missing command for [$loop_list]\n Usage: git corepo $cmd GITCOMMAND" >&2 && exit 1
   [ -z "$loop_list" ] && echo "Nothing to do" && exit 0
   delim=""
   for corepo_name in $loop_list; do
