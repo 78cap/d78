@@ -1,6 +1,7 @@
 *.pyc
 *.pyo
 bin/.hgpkg
+bin/.pkg
 bin/.repo
 hgext/tests/*.err
 hgext/tests/.testtimes

@@ -134,7 +134,8 @@ else
   [ "$DOCKER_HOST_CPU" == "i386" ] && DOCKER_HOST_CPU=x86_64
   [ "$DOCKER_HOST_CPU" == "arm" ] && DOCKER_HOST_CPU=aarch64
 fi
-PKG_DIR=$BASE_DIR/bin/.hgpkg/$DOCKER_HOST_CPU
+PKG_DIR=$BASE_DIR/bin/.pkg/$DOCKER_HOST_CPU
+OLD_PKG_DIR=$BASE_DIR/bin/.hgpkg
 ################################
 # This is common for d78 and s78
 #
@@ -178,6 +179,7 @@ mv_pkg git $REQ_VERSION_OF_GIT $VERSION_OF_GIT
 for name in mercurial python git; do
   [ -e $PKG_DIR/$name-old ] && rm -rf $PKG_DIR/$name-old
 done;
+[ -e $OLD_PKG_DIR ] && rm -rf $OLD_PKG_DIR
 if [ ! -z "$PKG_UPDATED" ]; then
   echo -e "VERSION_OF_HG=$REQ_VERSION_OF_HG\nVERSION_OF_PYTHON=$REQ_VERSION_OF_PYTHON  # used by mercurial only\nVERSION_OF_GIT=$REQ_VERSION_OF_GIT">$PKG_DIR/__versions__
   echo "Updated D78 packages:"

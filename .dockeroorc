@@ -1,8 +1,8 @@
-if [ -e $D78_HOME/bin/.hgpkg/${DOCKER_HOST_CPU:?notset} ] && [ -e $D78_HOME/bin/hg ]; then
+if [ -e $D78_HOME/bin/.pkg/${DOCKER_HOST_CPU:?notset} ] && [ -e $D78_HOME/bin/hg ]; then
   vol_suffix=
   [ $DOCKER_HOST_OS == Darwin ] && vol_suffix=,delegated
   add_vol "$D78_HOME/bin/hg:/usr/bin/hg:ro$vol_suffix"
-  add_vol "$D78_HOME/bin/.hgpkg/$DOCKER_HOST_CPU:/usr/bin/.hgpkg:ro$vol_suffix"
-  add_vol "$D78_HOME/bin/.hgpkg/$DOCKER_HOST_CPU/git/usr/libexec/git-core/git:/usr/bin/git:ro$vol_suffix"
-  VOLUMES="$VOLUMES -eGIT_EXEC_PATH=/usr/bin/.hgpkg/git/usr/libexec/git-core"
+  add_vol "$D78_HOME/bin/.pkg/$DOCKER_HOST_CPU:/usr/bin/.pkg:ro$vol_suffix"
+  add_vol "$D78_HOME/bin/.pkg/$DOCKER_HOST_CPU/git/usr/libexec/git-core/git:/usr/bin/git:ro$vol_suffix"
+  VOLUMES="$VOLUMES -eGIT_EXEC_PATH=/usr/bin/.pkg/git/usr/libexec/git-core"
 fi

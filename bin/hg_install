@@ -46,7 +46,7 @@ function install_ubuntu() {
     fi
   fi
   if [ -z "$INSTALLED" ]; then
-    if [ ! -e $BASE_DIR/bin/.hgpkg ]; then
+    if [ ! -e $BASE_DIR/bin/.pkg ]; then
       $BASE_DIR/bin/d78 update
       [ $? != 0 ] && echo "d78 update failed" && exit 1
     fi

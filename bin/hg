@@ -1,4 +1,4 @@
 #!/bin/bash
 [ `uname` != Linux ] && echo "$0 only works on Linux" && exit 1
 BASE=$(dirname $(readlink -f $0))
-LD_LIBRARY_PATH=$BASE/.hgpkg/python/lib:$LD_LIBRARY_PATH exec $BASE/.hgpkg/python/bin/python3 $BASE/.hgpkg/mercurial/bin/hg "$@"
+LD_LIBRARY_PATH=$BASE/.pkg/python/lib:$LD_LIBRARY_PATH exec $BASE/.pkg/python/bin/python3 $BASE/.pkg/mercurial/bin/hg "$@"
