@@ -105,7 +105,9 @@ _install_devtools)
       local_dest=${1:-$HOME/Downloads/devtools}
     fi
     [ "$local_dest" != "/opt" ] && mkdir -p $local_dest
-    docker run -it --rm --mount type=bind,src=$local_dest,target=/host_opt --mount type=bind,src=/$BASE_DIR,target=/$BASE_DIR,readonly -e HOST_OPT_DIR=$local_dest $($HOME/work/sec/publics/scripts/dockeroo image) $(readlink -f $0) $cmd
+    DOCKER_IMAGE="$($HOME/work/sec/publics/scripts/dockeroo teamcity-init | fgrep '##teamcity[setParameter' | tr -d \'\"\[\] | cut -d= -f3)"
+    [ $? != 0 ] || [ -z "$DOCKER_IMAGE" ] && echo "Cannot get the docker image" && exit 1
+    docker run -it --rm --mount type=bind,src=$local_dest,target=/host_opt --mount type=bind,src=$BASE_DIR,target=$BASE_DIR,readonly -e HOST_OPT_DIR=$local_dest $DOCKER_IMAGE $(readlink -f $0) $cmd
   fi
 ;;
 _update)
