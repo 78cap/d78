@@ -1,4 +1,6 @@
 #!/bin/bash
 [ `uname` != Linux ] && echo "$0 only works on Linux" && exit 1
 BASE=$(dirname $(readlink -f $0))
-LD_LIBRARY_PATH=$BASE/.pkg/python/lib:$LD_LIBRARY_PATH exec $BASE/.pkg/python/bin/python3 $BASE/.pkg/mercurial/bin/hg "$@"
+PKG_DIR=$BASE/.pkg/$(uname -p)
+[ ! -d $PKG_DIR ] && PKG_DIR=$BASE/.pkg
+LD_LIBRARY_PATH=$PKG_DIR/python/lib:$LD_LIBRARY_PATH exec $PKG_DIR/python/bin/python3 $PKG_DIR/mercurial/bin/hg "$@"
