@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Automatically doing a git pull when switching to the main branch
+# This might fail if your repo is not clean! In that case you might want to git stash.
+
+# To enable this hook, change file name to `post-checkout`
+
+# Get the name of the current branch
+branch=$(git symbolic-ref --short HEAD)
+
+# If the current branch is "main", do a "git pull"
+if [ "$branch" = "main" ]; then
+            git pull
+    fi
