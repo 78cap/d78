@@ -9,6 +9,6 @@
 branch=$(git symbolic-ref --short HEAD)
 
 # If the current branch is "main", do a "git pull"
-if [ "$branch" = "main" ]; then
+if [ "$branch" == "main" ]; then
             git pull
     fi
