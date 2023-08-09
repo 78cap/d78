@@ -6,7 +6,7 @@
 # To enable this hook, change file name to `post-checkout`
 
 # Get the name of the current branch
-branch=$(git symbolic-ref --short HEAD)
+branch=$(git branch --show-current)
 
 # If the current branch is "main", do a "git pull"
 if [ "$branch" == "main" ]; then
