@@ -1,0 +1,38 @@
+name: 'Checkout with corepos'
+description: 'Checks out sources for repo and its corepos'
+inputs:
+  repo-secrets:
+    description: 'Secrets for accessing other repos'
+    required: true
+  refs:
+    description: 'Branches/tags/SHAs to checkout, can be "main", "by-ref", "by-commit"'
+    required: false
+    default: 'main'
+  fetch-depth:
+    description: 'Fetch depth'
+    required: false
+    default: '1'
+#outputs:
+#  checkout-dir:
+#    description: "Checkout dir for main repo"
+#    value: ${{ steps.corepo_checkout.outputs.checkout-dir }}
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+      with:
+          sparse-checkout: '.corepos'
+          sparse-checkout-cone-mode: false
+          path: '.corepo_checkout'
+    - id: prepare_steps
+      run: exec(open("${{ github.action_path }}/generate_steps.py").read())
+      shell: python
+      env:
+        A_REPOSITORY: ${{ github.repository }}
+        A_GITDIR: '.corepo_checkout'
+        A_OUTPUT: '.corepo_checkout/action.yml'
+        A_REPO_SECRETS: ${{ inputs['repo-secrets'] }}
+        A_FETCH_DEPTH: ${{ inputs['fetch-depth'] }}
+        A_REFS: ${{ inputs['refs'] }}
+    - id: corepo_checkout
+      uses: ./.corepo_checkout
