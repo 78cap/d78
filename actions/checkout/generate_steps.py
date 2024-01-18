@@ -3,7 +3,7 @@ import os
 
 
 def main():
-    def get_arg(name, default=main):
+    def get_arg(name, default: str = main):
         evar = os.getenv('A_' + name, default)
         if evar == main:
             raise ValueError(f'Missing environment variable {name}')
@@ -11,32 +11,42 @@ def main():
     a_repository = get_arg('REPOSITORY')
     a_gitdir = get_arg('GITDIR')
     a_output = get_arg('OUTPUT')
-    a_repo_secrets = get_arg('REPO_SECRETS')
+    a_repo_secrets_pattern = get_arg('SECRETS_NAME_PATTERN', '{name}')
+    a_repo_secrets = get_arg('SECRETS', '')
     a_fetch_depth = get_arg('FETCH_DEPTH')
     a_refs = get_arg('REFS')
 
-    if '{name}' in a_repo_secrets:
-        def get_repo_secret(rr_name):
-            return 'ssh-key', '${{ secrets.' + a_repo_secrets.replace('{name}', rr_name.replace("-", "_")).upper() + ' }}'
-    else:
-        repo_secrets_dict = dict()
-        last_var = None
-        for line in a_repo_secrets.splitlines():
-            line = line.strip()
-            if line.startswith('#'):
-                continue
-            if ':' in line:
-                last_var, value = line.split(':', maxsplit=1)
-                last_var = last_var.strip()
-                repo_secrets_dict[last_var] = value.strip()
-            elif last_var:
-                repo_secrets_dict[last_var] += f'\n{line}'
+    repo_secrets_dict = None
+    no_pattern = False
 
-        def get_repo_secret(rr_name):
-            r_secret = repo_secrets_dict.get(rr_name)
+    def get_repo_secret(rr_name):
+        rr_secret_name = rr_name if no_pattern else a_repo_secrets_pattern.replace('{name}', rr_name.replace("-", "_")).upper()
+        if repo_secrets_dict:
+            r_secret = repo_secrets_dict.get(rr_secret_name)
             if not r_secret:
-                raise ValueError(f'Secret for repo {rr_name} not found')
-            return ('token' if r_secret.startswith('github_pat_') else 'ssh-key'), r_secret.strip()
+                raise ValueError(f'Secret {rr_secret_name} for repo {rr_name} not found')
+            return ('token' if r_secret.startswith('github_pat_') else 'ssh-key'), r_secret
+        else:
+            return 'ssh-key', '${{ secrets.' + rr_secret_name + ' }}'
+
+    if a_repo_secrets:
+        if a_repo_secrets.startswith('{'):
+            import json
+            repo_secrets_dict = json.loads(a_repo_secrets)
+        else:
+            no_pattern = True
+            repo_secrets_dict = dict()
+            last_var = None
+            for line in a_repo_secrets.splitlines():
+                line = line.strip()
+                if line.startswith('#'):
+                    continue
+                if ':' in line:
+                    last_var, value = line.split(':', maxsplit=1)
+                    last_var = last_var.strip()
+                    repo_secrets_dict[last_var] = value.strip()
+                elif last_var:
+                    repo_secrets_dict[last_var] += f'\n{line}'
 
     repo_org = os.path.dirname(a_repository)
     repo_name = os.path.basename(a_repository)
@@ -123,9 +133,7 @@ runs:
                 txt += f'        {n}: \'{v}\'\n'
             else:
                 new_line = '\n          '
-                txt += f'        {n}: |{new_line}' + v[0:-1].replace('\n', new_line) + v[-1:]
-                if not v.endswith('\n'):
-                    txt += '\n'
+                txt += f'        {n}: |{new_line}' + v.strip().replace('\n', new_line) + '\n'
     os.makedirs(os.path.dirname(a_output), exist_ok=True)
     with open(a_output, 'w') as f:
         f.write(txt)
