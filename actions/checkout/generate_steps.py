@@ -36,7 +36,7 @@ def main():
             r_secret = repo_secrets_dict.get(rr_name)
             if not r_secret:
                 raise ValueError(f'Secret for repo {rr_name} not found')
-            return ('token' if r_secret.startswith('github_pat_') else 'ssh-key'), r_secret
+            return ('token' if r_secret.startswith('github_pat_') else 'ssh-key'), r_secret.strip()
 
     repo_org = os.path.dirname(a_repository)
     repo_name = os.path.basename(a_repository)
@@ -123,7 +123,9 @@ runs:
                 txt += f'        {n}: \'{v}\'\n'
             else:
                 new_line = '\n          '
-                txt += f'        {n}: |{new_line}' + v.replace('\n', new_line)
+                txt += f'        {n}: |{new_line}' + v[0:-1].replace('\n', new_line) + v[-1:]
+                if not v.endswith('\n'):
+                    txt += '\n'
     os.makedirs(os.path.dirname(a_output), exist_ok=True)
     with open(a_output, 'w') as f:
         f.write(txt)
