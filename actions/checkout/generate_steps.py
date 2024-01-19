@@ -119,7 +119,8 @@ runs:
       run: rm {a_output}
       shell: bash
 '''
-    for r_name, checkout in checkouts.items():
+    # top level dirs get checked out before lower level
+    for r_name, checkout in sorted(checkouts.items(), key=lambda item: item[1].get('path', '')):
         txt += f'''\
     - id: checkout_{r_name}
       uses: actions/checkout@v4
