@@ -20,8 +20,9 @@ def main(argv=None):
             nb = json.load(f)
 
     for cell in nb.get('cells') or []:
-        cell.pop('outputs', None)
-        cell.pop('execution_count', None)
+        if cell['cell_type'] == 'code':
+            cell['outputs'] = []
+            cell['execution_count'] = None
     json.dump(nb, fp=sys.stdout, indent=1)
     return 0
 
