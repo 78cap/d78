@@ -4,7 +4,7 @@
 #
 [core]
 hooksPath = ~/work/d78/gitext/hooks
-#attributesFile = ~/work/d78/gitattributes78
+attributesFile = ~/work/d78/gitattributes78
 
 [alias]
 corepo= !~/work/d78/gitext/bin/git-corepo
